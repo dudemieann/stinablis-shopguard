@@ -79,7 +79,7 @@ footer{max-width:1100px;margin:0 auto;padding:0 16px 30px;display:flex;justify-c
 .toolbar{display:flex;justify-content:flex-end;margin:-4px 0 12px}
 .verdict{display:flex;gap:14px;align-items:center;border-radius:12px;padding:14px;color:#fff;margin-bottom:12px}
 .verdict b{font-size:1.15rem;display:block}
-.v-green{background:#157347}.v-amber{background:#9a5b00}.v-red{background:#b3202a;animation:flash 1s ease-in-out infinite alternate}
+.v-done{background:#1d5fa8}.v-green{background:#157347}.v-amber{background:#9a5b00}.v-red{background:#b3202a;animation:flash 1s ease-in-out infinite alternate}
 @keyframes flash{from{filter:brightness(1)}to{filter:brightness(1.4)}}
 @media(prefers-reduced-motion:reduce){.v-red{animation:none}}
 .lights{display:flex;flex-direction:column;gap:5px;background:#111;padding:7px;border-radius:99px;flex:none}
@@ -142,6 +142,24 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
 .fit{font-size:.84rem;color:#33414f;background:#f1f5f9;border-radius:6px;padding:4px 8px}
 #pack-btns{margin-top:6px;gap:5px;flex-wrap:nowrap}
 #pack-btns .btn{min-width:0;padding:5px 9px}
+.filters{display:flex;gap:8px;flex-wrap:wrap;margin:0 0 12px;align-items:center}
+.filters input{flex:1 1 220px;min-width:0}
+.pill{font:inherit;font-weight:600;border:1px solid #b9c4cf;background:#fff;color:var(--ink);padding:8px 14px;border-radius:99px;cursor:pointer;min-height:40px;white-space:nowrap}
+.pill[aria-pressed="true"]{background:var(--red);border-color:var(--red);color:#fff}
+.empty-msg{grid-column:1/-1;text-align:center}
+fieldset.radios{border:0;padding:0;margin:0;min-width:0}
+fieldset.radios legend{font-size:.8rem;font-weight:600;padding:0;margin-bottom:4px}
+.radio{display:flex;align-items:center;gap:8px;font-weight:500;margin:0 0 6px;flex-wrap:wrap}
+.radio input[type=radio]{width:auto;min-height:0;margin:0}
+.radio input[type=date]{width:auto;flex:0 1 170px}
+.btn[disabled]{opacity:.5;cursor:not-allowed}
+.btn.warnbtn{background:#c26a00;border-color:#c26a00;color:#fff}
+.btn.hot{background:var(--red);border-color:var(--red);color:#fff}
+.strip{display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;background:var(--green-bg);border:1px solid #9bd4b6;color:#0f5a38;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.deduct{margin-top:12px;padding-top:10px;border-top:1px solid var(--line);display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.cjrow{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:6px 0;border-bottom:1px solid var(--line)}
+.cjrow select{flex:1 1 220px;min-width:0}
+.cjrow input{width:110px}
 </style>
 </head>
 <body>
@@ -163,6 +181,29 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
   <div class="toolbar"><button class="btn sm" data-act="print-low" id="print-low-btn">Print All Low-Stock Labels</button></div>
 
   <section id="view-filament" role="tabpanel" aria-labelledby="tab-filament">
+    <div class="row" style="margin-bottom:10px"><button type="button" class="btn primary sm" data-act="toggle-add-fil" id="add-fil-toggle" aria-expanded="false" aria-controls="add-fil">+ Add Filament Spool</button></div>
+    <form class="panel hidden" id="add-fil" novalidate>
+      <h2>Add Filament Spool</h2>
+      <div class="fields two">
+        <div><label for="af-material">Material Type</label>
+          <select id="af-material"><option value="PLA">PLA</option><option value="PETG">PETG</option><option value="ABS">ABS</option><option value="ASA">ASA</option><option value="TPU">TPU</option><option value="Nylon / CF">Nylon / CF</option><option value="__other__">Other (type your own)</option></select>
+          <input id="af-custom" class="hidden" style="margin-top:6px" maxlength="30" placeholder="e.g. PC, HIPS, PVA" aria-label="Your own material name" autocomplete="off"></div>
+        <div><label for="af-brand">Color &amp; Brand</label><input id="af-brand" placeholder="e.g. Matte Black - Bambu" autocomplete="off"></div>
+        <div><label for="af-weight">Starting Usable Weight (g)</label><input id="af-weight" type="number" min="0" step="any" inputmode="decimal" value="1000"></div>
+        <div><label for="af-tare">Empty Spool Weight (g)</label><input id="af-tare" type="number" min="0" step="any" inputmode="decimal" value="250"></div>
+        <div><label for="af-thr">Reorder Level (g)</label><input id="af-thr" type="number" min="0" step="any" inputmode="decimal" value="250"></div>
+        <fieldset class="radios"><legend>Spool Status</legend>
+          <label class="radio"><input type="radio" name="af-status" id="af-sealed" value="sealed" checked> Sealed (not opened yet)</label>
+          <label class="radio"><input type="radio" name="af-status" id="af-opened" value="opened"> Opened on <input type="date" id="af-date" disabled aria-label="Date the spool was opened"></label>
+        </fieldset>
+      </div>
+      <div class="err" id="af-err" role="alert"></div>
+      <div class="row"><button class="btn primary" type="submit">Add to shelf</button><button class="btn" type="button" data-act="toggle-add-fil">Cancel</button></div>
+    </form>
+    <div class="filters">
+      <input type="search" id="fil-search" placeholder="Search by name, material or brand" aria-label="Search spools" autocomplete="off">
+      <button type="button" class="pill" id="fil-low" data-act="toggle-low" data-scope="fil" aria-pressed="false">Low Stock Only (<span id="fil-low-count">0</span>)</button>
+    </div>
     <details class="panel" id="settings">
       <summary>Settings: damp-air warning days &amp; default empty spool weight</summary>
       <div class="fields four" style="margin-top:8px">
@@ -191,6 +232,10 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
       <div class="err" id="ah-err" role="alert"></div>
       <div class="row"><button class="btn primary" type="submit">Add to shelf</button><button class="btn" type="button" data-act="toggle-add-hw">Cancel</button></div>
     </form>
+    <div class="filters">
+      <input type="search" id="hw-search" placeholder="Search by name, group or size" aria-label="Search parts" autocomplete="off">
+      <button type="button" class="pill" id="hw-low" data-act="toggle-low" data-scope="hw" aria-pressed="false">Low Stock Only (<span id="hw-low-count">0</span>)</button>
+    </div>
     <div id="hardware-groups"></div>
   </section>
 
@@ -262,8 +307,10 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
         <button class="btn sm" data-act="job-preset" data-p="p2">Reverse-Engineered Car Sensor Mount (PETG + M3 Inserts)</button>
         <button class="btn sm" data-act="job-preset" data-p="p3">Urgent Prototype Electronics Case (PETG + Full Screw Kit)</button>
         <button class="btn sm" data-act="job-preset" data-p="p4">Event Merch Batch (50x Clicker Keychains)</button>
+        <button class="btn sm" data-act="job-custom" id="job-custom-btn" aria-pressed="false">Check a Custom Job</button>
         <button class="btn sm danger" data-act="job-clear">Clear</button>
       </div>
+      <div id="job-editor">
       <div class="fields three" style="margin-top:12px">
         <div class="span"><label for="job-name">Job name (optional)</label><input id="job-name" placeholder="e.g. Customer bracket order"></div>
         <div><label for="job-days">Days Promised to Customer (optional)</label><input id="job-days" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 3"></div>
@@ -275,7 +322,24 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
         <div class="qty"><label for="job-add-qty" id="job-add-unit">Grams</label><input id="job-add-qty" type="number" min="1" step="any" inputmode="decimal"></div>
         <button class="btn primary" data-act="job-add">Add to job</button>
       </div>
+      </div>
+      <div id="custom-job" class="hidden">
+        <div style="margin-top:12px"><label for="cj-name">Job Name (optional)</label><input id="cj-name" placeholder="e.g. Custom Motor Mount" autocomplete="off"></div>
+        <div class="fields two" style="margin-top:10px">
+          <div><label for="cj-spool">Filament Spool</label><select id="cj-spool"></select></div>
+          <div><label for="cj-grams">Grams Needed</label><input id="cj-grams" type="number" min="0" step="any" inputmode="decimal" placeholder="e.g. 300"></div>
+        </div>
+        <div class="muted" style="margin-top:4px">We add 15% extra to the grams in case a print has to be redone.</div>
+        <h3 class="sub" style="margin:14px 0 4px">Hardware Needed</h3>
+        <div id="cj-rows"></div>
+        <div style="margin-top:8px"><button type="button" class="btn sm" data-act="cj-add-row">+ Add Part</button></div>
+        <div class="fields two" style="margin-top:12px">
+          <div><label for="cj-value">Estimated Job Value (RM)</label><input id="cj-value" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 600"></div>
+          <div><label for="cj-days">Promised Delivery Days</label><input id="cj-days" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 4"></div>
+        </div>
+      </div>
     </div>
+    <div id="deduct-strip"></div>
     <div id="job-result" aria-live="polite"></div>
   </section>
 </main>
@@ -329,7 +393,7 @@ function seed(){
     items:[],
     purchases:[]
   };
-  function fil(id,name,qty,thr,tare,opened,recipes){S.items.push({id:id,type:'filament',name:name,unit:'g',qty:qty,thr:thr,tare:tare,opened:opened,pack:1000,recipes:recipes||{}})}
+  function fil(id,name,qty,thr,tare,opened,recipes){S.items.push({id:id,type:'filament',name:name,unit:'g',qty:qty,thr:thr,tare:tare,opened:opened,dried:null,pack:1000,recipes:recipes||{}})}
   function hw(id,name,cat,qty,thr,pack,fit){S.items.push({id:id,type:'hardware',name:name,cat:cat,unit:'pcs',qty:qty,thr:thr,pack:pack,fitNote:fit||'',recipes:{}})}
   var rf={nozzle:215,bed:60,flow:0.98,dry:'Not needed if opened < 2 weeks',name:'Shopee - FilamentHub MY (West MY)',saved:ago(30)};
   fil('f1','PLA+ Black 1.75mm',820,200,250,ago(5),{'shopee - filamenthub my (west my)':rf});
@@ -427,10 +491,11 @@ function itemStats(it){
 function isLow(it){return it.qty<=it.thr}
 function humidity(it){
   if(!it.opened)return {lvl:'sealed',text:'Sealed — not opened yet',days:null};
-  var d=daysSince(it.opened),s=state.settings;
-  if(d>=s.red)return {lvl:'red',days:d,text:'Opened '+d+' days ago — DRY BEFORE USE (4–6 h). Humid Kuching air has likely soaked it.'};
-  if(d>=s.amber)return {lvl:'amber',days:d,text:'Opened '+d+' days ago — moisture risk. Store sealed with desiccant; dry if it pops or strings.'};
-  return {lvl:'ok',days:d,text:'Opened '+d+' days ago — moisture OK'};
+  var driedOn=(it.dried&&it.dried>=it.opened)?it.dried:null,d=daysSince(driedOn||it.opened),s=state.settings,w=driedOn?'Dried':'Opened';
+  if(d>=s.red)return {lvl:'red',days:d,text:w+' '+d+' days ago — DRY BEFORE USE (4–6 h). Humid Kuching air has likely soaked it.'};
+  if(d>=s.amber)return {lvl:'amber',days:d,text:w+' '+d+' days ago — moisture risk. Store sealed with desiccant; dry if it pops or strings.'};
+  if(driedOn&&d<=0)return {lvl:'ok',days:0,text:'Dried today — damp-air count is back to 0 days'};
+  return {lvl:'ok',days:d,text:w+' '+d+' days ago — moisture OK'};
 }
 
 /* ---------- render ---------- */
@@ -459,7 +524,7 @@ function recipeHtml(it){
 function filamentCard(it){
   var low=isLow(it),h=humidity(it),pct=Math.max(0,Math.min(100,it.qty/1000*100));
   return '<article class="card'+(low?' low':'')+'" data-id="'+it.id+'">'+
-   '<div class="row between"><h3>'+esc(it.name)+'</h3>'+(low?'<span class="badge b-red">'+(it.qty<=0?'OUT':'LOW')+'</span>':'<span class="badge b-green">OK</span>')+'</div>'+
+   '<div class="row between"><h3>'+esc(it.name)+'</h3><span class="row" style="gap:6px">'+(it.opened?'':'<span class="badge b-blue">Sealed</span>')+(low?'<span class="badge b-red">'+(it.qty<=0?'OUT':'LOW')+'</span>':'<span class="badge b-green">OK</span>')+'</span></div>'+
    '<div class="bar'+(low?' low':'')+'" role="img" aria-label="'+it.qty+' grams left"><i style="width:'+pct+'%"></i></div>'+
    '<div class="row between"><b>'+Math.round(it.qty)+' g left</b><span class="muted">reorder level '+it.thr+' g</span></div>'+
    '<div class="hum '+h.lvl+'">'+esc(h.text)+'</div>'+
@@ -470,7 +535,7 @@ function filamentCard(it){
      '<div class="muted" data-scale-out="'+it.id+'">Empty spool weight: '+it.tare+' g — type a reading to see how much filament is left.</div></div>'+
    '<div class="row"><button class="btn sm" data-act="restock" data-id="'+it.id+'">Restock</button>'+
      '<button class="btn sm" data-act="card" data-id="'+it.id+'">Shelf / Spool Label</button>'+
-     (it.opened?'':'<button class="btn sm" data-act="open-today" data-id="'+it.id+'">Mark opened today</button>')+'</div>'+
+     (it.opened?'<button class="btn sm'+(h.lvl==='red'?' hot':h.lvl==='amber'?' warnbtn':'')+'" data-act="dry-today" data-id="'+it.id+'">Mark Dried Today</button>':'<button class="btn sm primary" data-act="open-today" data-id="'+it.id+'">Open Spool Today</button>')+'</div>'+
    '<details><summary>Edit spool</summary><div class="fields two" style="margin-top:6px">'+
      '<div><label>Name</label><input data-edit="name" value="'+esc(it.name)+'"></div>'+
      '<div><label>Empty Spool Weight (g)</label><input data-edit="tare" type="number" min="0" value="'+it.tare+'"></div>'+
@@ -508,8 +573,9 @@ function renderFilament(){
   if(document.activeElement!==a)a.value=s.amber;
   if(document.activeElement!==r)r.value=s.red;
   if(document.activeElement!==t)t.value=s.tare;
-  var list=state.items.filter(function(i){return i.type==='filament'}).sort(function(a,b){return (isLow(b)-isLow(a))||(a.qty-b.qty)});
-  $('#filament-grid').innerHTML=list.map(filamentCard).join('')||'<p class="muted">No filament yet. Log a purchase to add one.</p>';
+  var all=state.items.filter(function(i){return i.type==='filament'}),list=all.filter(function(i){return matches(i,'fil')}).sort(function(a,b){return (isLow(b)-isLow(a))||(a.qty-b.qty)});
+  filterBar('fil',all);
+  $('#filament-grid').innerHTML=list.map(filamentCard).join('')||(all.length?emptyMsg('fil','spools'):'<p class="muted">No filament yet. Tap + Add Filament Spool to add one.</p>');
 }
 function hwGroups(){
   var base=['Screws','Nuts','Heat-set inserts','Bearings','Magnets','Fidgets & Keychains','Springs & Finishing'],seen={};
@@ -533,15 +599,17 @@ function submitAddHw(e){
   if(c===''||isNaN(cn)||cn<0){err.textContent='Enter the starting count (0 or more).';return}
   if(t===''||isNaN(tn)||tn<0){err.textContent='Enter the reorder level (0 or more).';return}
   state.items.push({id:uid(),type:'hardware',name:nm.slice(0,120),cat:grp,unit:'pcs',qty:cn,thr:tn,pack:50,fitNote:fit.slice(0,200),recipes:{}});
-  save();$('#add-hw').reset();$('#add-hw').classList.add('hidden');$('#add-hw-toggle').setAttribute('aria-expanded','false');
+  save();resetFilters();$('#add-hw').reset();$('#add-hw').classList.add('hidden');$('#add-hw-toggle').setAttribute('aria-expanded','false');
   renderAll();toast('Added '+nm+' to '+grp);
 }
 function renderHardware(){
   renderHwGroupSelect();
   var cats={},order=[];
-  state.items.filter(function(i){return i.type==='hardware'}).forEach(function(i){var c=i.cat||'Other';if(!cats[c]){cats[c]=[];order.push(c)}cats[c].push(i)});
+  var allHw=state.items.filter(function(i){return i.type==='hardware'});
+  allHw.filter(function(i){return matches(i,'hw')}).forEach(function(i){var c=i.cat||'Other';if(!cats[c]){cats[c]=[];order.push(c)}cats[c].push(i)});
+  filterBar('hw',allHw);
   $('#hardware-groups').innerHTML=order.map(function(c){
-    return '<h2 style="font-size:1.05rem;margin:14px 0 8px">'+esc(c)+'</h2><div class="grid">'+cats[c].map(hardwareCard).join('')+'</div>'}).join('')||'<p class="muted">No hardware yet.</p>';
+    return '<h2 style="font-size:1.05rem;margin:14px 0 8px">'+esc(c)+'</h2><div class="grid">'+cats[c].map(hardwareCard).join('')+'</div>'}).join('')||(allHw.length?'<div class="grid">'+emptyMsg('hw','parts')+'</div>':'<p class="muted">No hardware yet.</p>');
 }
 function renderPurchases(){
   var keys={};state.purchases.forEach(function(p){keys[norm(p.supplier)]=1});
@@ -620,7 +688,7 @@ function submitPurchase(e){
   if(isNaN(d)||d<0){err.textContent='Enter delivery days (0 or more).';return}
   if(v===NEW){
     var t=$('#f-newtype').value;
-    it=t==='filament'?{id:uid(),type:'filament',name:nm,unit:'g',qty:0,thr:200,tare:state.settings.tare,opened:null,pack:1000,recipes:{}}
+    it=t==='filament'?{id:uid(),type:'filament',name:nm,unit:'g',qty:0,thr:200,tare:state.settings.tare,opened:null,dried:null,pack:1000,recipes:{}}
                      :{id:uid(),type:'hardware',name:nm,cat:'Other',unit:'pcs',qty:0,thr:20,pack:Math.round(q),fitNote:'',recipes:{}};
     state.items.push(it);
   }
@@ -773,14 +841,19 @@ function adviceHtml(r,pn){
 function renderJobResult(){
   var el=$('#job-result'),r=jobCheck();
   if(!r.rows.length){el.innerHTML='<div class="panel muted">Add filament grams and hardware parts (or tap a preset) to check stock before you promise a date.</div>';return}
+  var top5=undoStack[undoStack.length-1];
+  if(top5&&top5.sig===jobSig()){
+    el.innerHTML='<div class="verdict v-done" role="status"><div><b>DONE — Parts taken off the shelf</b>The Filament and Hardware tabs now show what is left. Tap Undo at the top to put the parts back.</div></div><div class="panel">'+deductHtml(r)+'</div>';
+    return;
+  }
   var pn=plan(r);
   var V={green:['GREEN — Ready to promise','All filament (including 15% extra for a reprint) and every part is in stock.'],
          amber:['AMBER — Small gap, top up first','A minor shortage. Cover it before you promise a date.'],
          red:['RED — Do not promise a date yet','Stock is short. Cover the shortage before promising a delivery date.']}[r.level];
   var h='<div class="verdict v-'+r.level+'" role="status"><div class="lights" aria-hidden="true"><i></i><i></i><i></i></div><div><b>'+V[0]+'</b>'+V[1]+'</div></div>';
   if(r.shorts.length){
-    var vt=parseFloat(state.job.value),miss=pn.miss>0?rm(pn.miss)+' in missing parts':'Missing parts';
-    h+='<div class="risk r-'+r.level+'"><b>Order Value Held Up</b><div class="big">'+miss+(vt>0?' is holding up a '+rm(vt)+' custom job.':' is holding up this custom job.')+'</div>'+
+    var vt=parseFloat(state.job.value),sub=vt>0?'a '+rm(vt)+' custom job':'this custom job',head=pn.miss>0?rm(pn.miss)+' in missing parts is holding up '+sub+'.':'The missing parts are holding up '+sub+'.';
+    h+='<div class="risk r-'+r.level+'"><b>Order Value Held Up</b><div class="big">'+head+'</div>'+
       '<div>'+(pn.chosen>0?'Covering it costs about <b style="display:inline;font-size:inherit;text-transform:none;letter-spacing:0">'+rm(pn.chosen)+'</b> ('+(pn.choice==='local'?'local Kuching top-up':'West MY top-up')+'). ':'')+(vt>0?'':'Add the Job Value above to see what is at stake.')+'</div></div>';
   }
   h+='<div class="panel">';
@@ -790,7 +863,7 @@ function renderJobResult(){
     r.rows.map(function(x){var u=x.it.type==='filament'?' g':'';
       return '<tr><td>'+esc(x.it.name)+'</td><td>'+x.need+u+' / '+x.have+u+'</td><td class="'+(x.sev?'st-'+x.sev:'st-ok')+'">'+(x.sev?'SHORT '+x.lack+u:'OK')+'</td><td>'+(x.cost==null?'no price':rm(x.cost))+'</td></tr>'}).join('')+
     '</tbody></table></div>';
-  h+='<p style="margin:10px 0 0"><b>Estimated cost of filament + parts: '+rm(r.cost)+'</b><span class="muted"> at the last prices you paid'+(r.costM>r.cost?' ('+rm(r.costM)+' if you need the 15% extra for a reprint)':'')+(r.unpriced?'; '+r.unpriced+' item(s) have no price saved yet':'')+'.</span></p></div>';
+  h+='<p style="margin:10px 0 0"><b>Estimated cost of filament + parts: '+rm(r.cost)+'</b><span class="muted"> at the last prices you paid'+(r.costM>r.cost?' ('+rm(r.costM)+' if you need the 15% extra for a reprint)':'')+(r.unpriced?'; '+r.unpriced+' item(s) have no price saved yet':'')+'.</span></p>'+deductHtml(r)+'</div>';
   h+='<div class="panel advice"><h2>Smart Kuching Reorder Advice</h2>'+adviceHtml(r,pn)+'</div>';
   el.innerHTML=h;
 }
@@ -809,7 +882,7 @@ function cleanState(d){
     if(!i||typeof i!=='object'||(i.type!=='filament'&&i.type!=='hardware')||!i.id)return;
     var id=str(i.id,40);if(!safeKey(id)||ids[id])return;
     var fil=i.type==='filament',it={id:id,type:i.type,name:str(i.name,120)||'Unnamed item',unit:fil?'g':'pcs',qty:Math.max(0,num(i.qty,0)),thr:Math.max(0,num(i.thr,0)),pack:Math.max(1,num(i.pack,fil?1000:50)),recipes:{}};
-    if(fil){it.tare=Math.max(0,num(i.tare,250));it.opened=(typeof i.opened==='string'&&DATE_RE.test(i.opened))?i.opened:null}
+    if(fil){it.tare=Math.max(0,num(i.tare,250));it.opened=(typeof i.opened==='string'&&DATE_RE.test(i.opened))?i.opened:null;it.dried=(typeof i.dried==='string'&&DATE_RE.test(i.dried))?i.dried:null}
     else{it.cat=str(i.cat,40)||'Other';it.fitNote=str(i.fitNote,200)}
     if(i.recipes&&typeof i.recipes==='object')Object.keys(i.recipes).forEach(function(k){
       var x=i.recipes[k];if(!safeKey(k)||!x||typeof x!=='object')return;
@@ -847,7 +920,7 @@ function importBackup(file){
     try{data=JSON.parse(rd.result)}catch(e){toast('Could not load: the file is damaged or is not a backup file');return}
     S=(data&&data.app==='stinablis-shopguard')?cleanState(data.data):null;
     if(!S){toast('Could not load: this is not a Stinablis ShopGuard backup file');return}
-    state=S;save();$('#logger').reset();renderAll();
+    state=S;clearUndo();jobMode='preset';cjReset();resetFilters();save();$('#logger').reset();renderAll();
     toast('Backup loaded: '+S.items.length+' items, '+S.purchases.length+' purchases');
   };
   rd.readAsText(file);
@@ -877,6 +950,8 @@ function renderJob(){
   sel.innerHTML='<optgroup label="Filament (grams)">'+opts(state.items.filter(function(i){return i.type==='filament'}))+'</optgroup><optgroup label="Hardware (pieces)">'+opts(state.items.filter(function(i){return i.type==='hardware'}))+'</optgroup>';
   if(cur&&item(cur))sel.value=cur;
   onJobAddChange(true);
+  renderCustomJob();
+  renderDeductStrip();
   renderJobResult();
 }
 function onJobAddChange(keep){
@@ -936,6 +1011,142 @@ function openCards(list,title,btn){
 }
 function closeCards(){$('#card-modal').classList.add('hidden');document.body.classList.remove('cards-open')}
 
+/* ---------- Piece 5: shop upgrades ---------- */
+var F={fil:{q:'',low:false},hw:{q:'',low:false}};
+function matches(it,scope){
+  var f=F[scope];
+  if(f.low&&!isLow(it))return false;
+  var q=norm(f.q);if(!q)return true;
+  var hay=norm([it.name,it.cat||'',it.fitNote||'',it.type==='filament'?'filament spool'+(it.opened?'':' sealed'):'hardware'].join(' '));
+  return q.split(/\s+/).every(function(w){return hay.indexOf(w)>=0});
+}
+function resetFilters(){
+  F={fil:{q:'',low:false},hw:{q:'',low:false}};
+  $('#fil-search').value='';$('#hw-search').value='';
+}
+function filterBar(scope,list){
+  var f=F[scope],n=list.filter(isLow).length,b=$('#'+scope+'-low');
+  $('#'+scope+'-low-count').textContent=n;
+  b.setAttribute('aria-pressed',f.low?'true':'false');
+}
+function emptyMsg(scope,word){
+  return '<div class="panel empty-msg"><p style="margin:0 0 10px">No '+word+' match your search or filter.</p><button type="button" class="btn sm primary" data-act="clear-filters" data-scope="'+scope+'">Clear Filters</button></div>';
+}
+/* new filament spool form */
+function onMaterialChange(){$('#af-custom').classList.toggle('hidden',$('#af-material').value!=='__other__')}
+function onStatusChange(){
+  var op=$('#af-opened').checked,d=$('#af-date');
+  d.disabled=!op;if(op&&!d.value)d.value=today();
+}
+function submitAddFil(e){
+  e.preventDefault();
+  var err=$('#af-err');err.textContent='';
+  var mat=$('#af-material').value,custom=$('#af-custom').value.trim(),brand=$('#af-brand').value.trim();
+  if(mat==='__other__'){if(!custom){err.textContent='Type the name of the material.';return}mat=custom}
+  if(!brand){err.textContent='Enter the color and brand.';return}
+  var w=parseFloat($('#af-weight').value),t=parseFloat($('#af-tare').value),th=parseFloat($('#af-thr').value);
+  if(isNaN(w)||w<0){err.textContent='Enter the starting usable weight in grams (0 or more).';return}
+  if(isNaN(t)||t<0){err.textContent='Enter the empty spool weight in grams (0 or more).';return}
+  if(isNaN(th)||th<0){err.textContent='Enter the reorder level in grams (0 or more).';return}
+  var opened=null;
+  if($('#af-opened').checked){
+    var d=$('#af-date').value;
+    if(!DATE_RE.test(d)){err.textContent='Pick the date the spool was opened.';return}
+    if(daysSince(d)<0){err.textContent='The opened date cannot be in the future.';return}
+    opened=d;
+  }
+  var nm=(mat+' '+brand).slice(0,120);
+  if(state.items.some(function(i){return i.type==='filament'&&norm(i.name)===norm(nm)})){err.textContent='A spool with this name is already on the shelf. Use Restock to add more to it.';return}
+  state.items.push({id:uid(),type:'filament',name:nm,unit:'g',qty:Math.round(w*10)/10,thr:th,tare:t,opened:opened,dried:null,pack:1000,recipes:{}});
+  save();resetFilters();closeAddFil();renderAll();
+  toast('Added '+nm+(opened?'':' (sealed)'));
+}
+function closeAddFil(){
+  $('#add-fil').reset();$('#add-fil').classList.add('hidden');$('#add-fil-toggle').setAttribute('aria-expanded','false');
+  onMaterialChange();onStatusChange();
+}
+/* before-you-promise: custom job builder */
+var jobMode='preset',CJ={spool:'',grams:'',rows:[{item:'',qty:''}]};
+function cjReset(){CJ={spool:'',grams:'',rows:[{item:'',qty:''}]}}
+function cjSync(){
+  var lines=[],sp=item(CJ.spool),g=parseFloat(CJ.grams);
+  if(sp&&sp.type==='filament'&&g>0)lines.push({item:sp.id,qty:g});
+  CJ.rows.forEach(function(r){
+    var it=item(r.item),q=parseFloat(r.qty);
+    if(it&&it.type==='hardware'&&q>0){var ex=lines.filter(function(l){return l.item===it.id})[0];if(ex)ex.qty+=q;else lines.push({item:it.id,qty:q})}
+  });
+  state.job.lines=lines;save();renderJobResult();
+}
+function hwOptions(sel){
+  var cats={},order=[];
+  state.items.filter(function(i){return i.type==='hardware'}).forEach(function(i){var c=i.cat||'Other';if(!cats[c]){cats[c]=[];order.push(c)}cats[c].push(i)});
+  return '<option value="">Choose a part…</option>'+order.map(function(c){return '<optgroup label="'+esc(c)+'">'+cats[c].map(function(i){return '<option value="'+i.id+'"'+(i.id===sel?' selected':'')+'>'+esc(i.name)+' — '+i.qty+' on shelf</option>'}).join('')+'</optgroup>'}).join('');
+}
+function renderCustomJob(){
+  var on=jobMode==='custom';
+  $('#job-editor').classList.toggle('hidden',on);$('#custom-job').classList.toggle('hidden',!on);
+  var cb=$('#job-custom-btn');cb.className='btn sm'+(on?' primary':'');cb.setAttribute('aria-pressed',on?'true':'false');
+  if(!on)return;
+  var J=state.job;
+  if(document.activeElement!==$('#cj-name'))$('#cj-name').value=J.name||'';
+  if(document.activeElement!==$('#cj-days'))$('#cj-days').value=J.days==null?'':J.days;
+  if(document.activeElement!==$('#cj-value'))$('#cj-value').value=J.value==null?'':J.value;
+  if(!item(CJ.spool))CJ.spool='';
+  $('#cj-spool').innerHTML='<option value="">No filament needed</option>'+state.items.filter(function(i){return i.type==='filament'}).map(function(i){return '<option value="'+i.id+'"'+(i.id===CJ.spool?' selected':'')+'>'+esc(i.name)+' — '+Math.round(i.qty)+' g on shelf</option>'}).join('');
+  if(document.activeElement!==$('#cj-grams'))$('#cj-grams').value=CJ.grams;
+  CJ.rows.forEach(function(r){if(r.item&&!item(r.item))r.item=''});
+  $('#cj-rows').innerHTML=CJ.rows.map(function(r,i){
+    return '<div class="cjrow"><select data-cj-item="'+i+'" aria-label="Part '+(i+1)+'">'+hwOptions(r.item)+'</select>'+
+      '<input type="number" min="0" step="1" inputmode="numeric" data-cj-qty="'+i+'" value="'+esc(r.qty)+'" placeholder="How many" aria-label="Quantity needed for part '+(i+1)+'"><span class="muted">pcs</span>'+
+      '<button type="button" class="btn sm danger" data-act="cj-remove" data-i="'+i+'" aria-label="Remove part '+(i+1)+'">Remove</button></div>'}).join('');
+}
+/* deduct parts from stock, with undo */
+var undoStack=[],UNDO_KEY='stinablis_shopguard_undo_v1';
+function saveUndo(){try{localStorage.setItem(UNDO_KEY,JSON.stringify(undoStack))}catch(e){}}
+function loadUndo(){
+  try{
+    var r=JSON.parse(localStorage.getItem(UNDO_KEY)||'[]');
+    if(Array.isArray(r))undoStack=r.filter(function(u){return u&&Array.isArray(u.entries)&&u.entries.every(function(e){return e&&typeof e.id==='string'&&isFinite(e.before)&&isFinite(e.after)&&isFinite(e.amount)})}).slice(-10);
+  }catch(e){undoStack=[]}
+}
+function clearUndo(){undoStack=[];try{localStorage.removeItem(UNDO_KEY)}catch(e){}}
+function jobSig(){return JSON.stringify(state.job.lines.map(function(l){return [l.item,+l.qty]}).sort())}
+function canDeduct(r){return r.rows.length>0&&r.rows.every(function(x){return x.have>=x.base})}
+function deductHtml(r){
+  var can=canDeduct(r),top=undoStack[undoStack.length-1],done=top&&top.sig===jobSig(),note;
+  if(done)note='Parts already deducted. Tap Undo at the top to put them back.';
+  else if(!can)note='Restock missing parts before deducting.';
+  else if(r.level!=='green')note='Stock covers the job itself, but not the full 15% extra for a reprint.';
+  else note='Takes exactly what this job needs off the shelf. You can undo it.';
+  return '<div class="deduct"><button type="button" class="btn primary" data-act="deduct"'+((!can||done)?' disabled':'')+'>Deduct Parts From Stock</button> <span class="muted">'+esc(note)+'</span></div>';
+}
+function deductParts(){
+  var r=jobCheck();
+  if(!canDeduct(r)){toast('Restock missing parts before deducting.');return}
+  var entries=r.rows.map(function(x){
+    var it=x.it,before=it.qty,after=Math.round((before-x.base)*100)/100;
+    it.qty=after;return {id:it.id,name:it.name,before:before,after:after,amount:x.base,filament:it.type==='filament'};
+  });
+  undoStack.push({job:state.job.name||'',sig:jobSig(),at:Date.now(),entries:entries});
+  undoStack=undoStack.slice(-10);saveUndo();save();renderAll();
+  toast('Parts deducted — '+entries.length+' item'+(entries.length===1?'':'s')+' taken off the shelf');
+}
+function undoDeduct(){
+  var u=undoStack.pop();if(!u)return;
+  u.entries.forEach(function(e){
+    var it=item(e.id);if(!it)return;
+    it.qty=(it.qty===e.after)?e.before:Math.round((it.qty+e.amount)*100)/100;
+  });
+  saveUndo();save();renderAll();toast('Undone — the parts are back on the shelf');
+}
+function renderDeductStrip(){
+  var el=$('#deduct-strip'),u=undoStack[undoStack.length-1];
+  if(!u){el.innerHTML='';return}
+  el.innerHTML='<div class="strip" role="status"><div><b>Parts deducted'+(u.job?' for '+esc(u.job):'')+'.</b> '+u.entries.length+' item'+(u.entries.length===1?'':'s')+' taken off the shelf'+(undoStack.length>1?' ('+undoStack.length+' deductions can be undone)':'')+'.'+
+    '<details><summary>See what changed</summary><ul style="margin:4px 0 0;padding-left:18px">'+u.entries.map(function(e){return '<li>'+esc(e.name)+': '+e.before+(e.filament?' g':'')+' → '+e.after+(e.filament?' g':'')+'</li>'}).join('')+'</ul></details></div>'+
+    '<button type="button" class="btn" data-act="undo-deduct">Undo</button></div>';
+}
+
 /* ---------- actions ---------- */
 var resetArm=false,resetT;
 function act(btn){
@@ -953,7 +1164,9 @@ function act(btn){
     if(isNaN(c)||c<0){toast('Enter a count of 0 or more.');return}
     it.qty=c;save();renderAll();toast(it.name+': '+c+' pcs');
   }else if(a==='open-today'){
-    it.opened=today();save();renderAll();toast('Opened date set to today');
+    it.opened=today();it.dried=null;save();renderAll();toast(it.name+': opened today — the damp-air count starts now');
+  }else if(a==='dry-today'){
+    it.dried=today();save();renderAll();toast(it.name+': marked dried today');
   }else if(a==='edit-save'){
     var g=function(k){var e=$('[data-edit="'+k+'"]',card);return e?e.value:null};
     var nm=g('name');if(nm!==null&&nm.trim())it.name=nm.trim();
@@ -984,12 +1197,31 @@ function act(btn){
     window.print();
   }else if(a==='close-card'){
     closeCards();
+  }else if(a==='toggle-add-fil'){
+    var ff=$('#add-fil'),openF=ff.classList.contains('hidden');
+    if(openF){ff.classList.remove('hidden');$('#add-fil-toggle').setAttribute('aria-expanded','true');$('#af-tare').value=state.settings.tare;$('#af-err').textContent='';onMaterialChange();onStatusChange();$('#af-material').focus()}
+    else closeAddFil();
+  }else if(a==='toggle-low'){
+    var sc=btn.getAttribute('data-scope');F[sc].low=!F[sc].low;if(sc==='fil')renderFilament();else renderHardware();
+  }else if(a==='clear-filters'){
+    resetFilters();renderFilament();renderHardware();
+  }else if(a==='job-custom'){
+    jobMode='custom';cjReset();state.job=defaultJob();save();renderJob();$('#cj-name').focus();
+  }else if(a==='cj-add-row'){
+    CJ.rows.push({item:'',qty:''});renderCustomJob();
+  }else if(a==='cj-remove'){
+    CJ.rows.splice(parseInt(btn.getAttribute('data-i'),10),1);if(!CJ.rows.length)CJ.rows.push({item:'',qty:''});renderCustomJob();cjSync();
+  }else if(a==='deduct'){
+    deductParts();
+  }else if(a==='undo-deduct'){
+    undoDeduct();
   }else if(a==='job-preset'){
+    jobMode='preset';
     var pr=PRESETS.filter(function(x){return x.id===btn.getAttribute('data-p')})[0];
     state.job={name:pr.name,days:pr.days,value:pr.value,lines:pr.lines.filter(function(l){return item(l[0])}).map(function(l){return {item:l[0],qty:l[1]}})};
     save();renderJob();toast('Loaded: '+pr.name);
   }else if(a==='job-clear'){
-    state.job=defaultJob();save();renderJob();
+    state.job=defaultJob();if(jobMode==='custom')cjReset();save();renderJob();
   }else if(a==='job-add'){
     var ai=item($('#job-add-item').value),aq=parseFloat($('#job-add-qty').value);
     if(!ai||!(aq>0)){toast('Pick an item and a quantity above 0.');return}
@@ -1017,7 +1249,7 @@ function act(btn){
   }else if(a==='reset'){
     if(!resetArm){resetArm=true;btn.textContent='Tap again to confirm reset';clearTimeout(resetT);resetT=setTimeout(function(){resetArm=false;btn.textContent='Reset Demo Data'},4000);return}
     resetArm=false;btn.textContent='Reset Demo Data';
-    state=seed();save();$('#logger').reset();renderAll();toast('Demo data restored');
+    state=seed();clearUndo();jobMode='preset';cjReset();resetFilters();save();$('#logger').reset();closeAddFil();renderAll();toast('Demo data restored');
   }
 }
 document.addEventListener('click',function(e){
@@ -1037,9 +1269,24 @@ document.addEventListener('input',function(e){
   if(t.id==='job-days'){state.job.days=t.value===''?null:Math.max(0,parseInt(t.value,10)||0);save();renderJobResult()}
   if(t.id==='job-value'){state.job.value=t.value===''?null:Math.max(0,parseFloat(t.value)||0);save();renderJobResult()}
   if(t.id==='job-name'){state.job.name=t.value;save()}
+  if(t.id==='fil-search'){F.fil.q=t.value;renderFilament()}
+  if(t.id==='hw-search'){F.hw.q=t.value;renderHardware()}
+  if(t.id==='cj-name'){state.job.name=t.value;save()}
+  if(t.id==='cj-days'){state.job.days=t.value===''?null:Math.max(0,parseInt(t.value,10)||0);save();renderJobResult()}
+  if(t.id==='cj-value'){state.job.value=t.value===''?null:Math.max(0,parseFloat(t.value)||0);save();renderJobResult()}
+  if(t.id==='cj-grams'){CJ.grams=t.value;cjSync()}
+  if(t.hasAttribute&&t.hasAttribute('data-cj-qty')){var cr=CJ.rows[parseInt(t.getAttribute('data-cj-qty'),10)];if(cr){cr.qty=t.value;cjSync()}}
   if(t.id==='f-qty'||t.id==='f-rm')updateCalc();
   if(t.id==='f-supplier')updateRecipeHint();
 });
+document.addEventListener('change',function(e){
+  var t=e.target;
+  if(t.id==='cj-spool'){CJ.spool=t.value;cjSync()}
+  if(t.hasAttribute&&t.hasAttribute('data-cj-item')){var cr=CJ.rows[parseInt(t.getAttribute('data-cj-item'),10)];if(cr){cr.item=t.value;cjSync()}}
+  if(t.id==='af-material')onMaterialChange();
+  if(t.name==='af-status')onStatusChange();
+});
+$('#add-fil').addEventListener('submit',submitAddFil);
 $('#import-file').addEventListener('change',function(e){var f=e.target.files&&e.target.files[0];importBackup(f);e.target.value=''});
 $('#job-add-item').addEventListener('change',function(){$('#job-add-qty').value='';onJobAddChange(false)});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCards()});
@@ -1049,6 +1296,7 @@ $('#logger').addEventListener('submit',submitPurchase);
 $('#add-hw').addEventListener('submit',submitAddHw);
 
 state=load()||seed();
+loadUndo();
 if(!state.job)state.job=defaultJob();
 if(state.job.value===undefined)state.job.value=null;
 save();
