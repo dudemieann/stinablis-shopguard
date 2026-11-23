@@ -139,6 +139,9 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
 .advice .hint{font-size:.8rem;color:var(--muted);margin:2px 0 4px}
 #data-tools{justify-content:flex-end}
 .panel h3.sub{margin:-4px 0 8px;font-size:.95rem;color:var(--brand)}
+.fit{font-size:.84rem;color:#33414f;background:#f1f5f9;border-radius:6px;padding:4px 8px}
+#pack-btns{margin-top:6px;gap:5px;flex-wrap:nowrap}
+#pack-btns .btn{min-width:0;padding:5px 9px}
 </style>
 </head>
 <body>
@@ -173,6 +176,21 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
   </section>
 
   <section id="view-hardware" role="tabpanel" aria-labelledby="tab-hardware" class="hidden">
+    <div class="row" style="margin-bottom:10px"><button type="button" class="btn primary sm" data-act="toggle-add-hw" id="add-hw-toggle" aria-expanded="false" aria-controls="add-hw">+ Add Hardware Item</button></div>
+    <form class="panel hidden" id="add-hw" novalidate>
+      <h2>Add Hardware Item</h2>
+      <div class="fields two">
+        <div><label for="ah-name">Item Name</label><input id="ah-name" placeholder="e.g. Brass Standoff M3" autocomplete="off"></div>
+        <div><label for="ah-group">Group</label><select id="ah-group"></select></div>
+        <div><label for="ah-fit">Exact Size / Fit Note</label><input id="ah-fit" placeholder="e.g. M3 x 10 mm, female-female" autocomplete="off"></div>
+        <div class="fields two" style="gap:10px">
+          <div><label for="ah-count">Starting Count</label><input id="ah-count" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 50"></div>
+          <div><label for="ah-thr">Reorder Level</label><input id="ah-thr" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 20"></div>
+        </div>
+      </div>
+      <div class="err" id="ah-err" role="alert"></div>
+      <div class="row"><button class="btn primary" type="submit">Add to shelf</button><button class="btn" type="button" data-act="toggle-add-hw">Cancel</button></div>
+    </form>
     <div id="hardware-groups"></div>
   </section>
 
@@ -198,7 +216,8 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
       </div>
 
       <div class="fields four" style="margin-top:10px">
-        <div><label for="f-qty" id="f-qty-label">Quantity Added (g)</label><input id="f-qty" type="number" min="1" step="any" inputmode="decimal"></div>
+        <div><label for="f-qty" id="f-qty-label">Quantity Added (g)</label><input id="f-qty" type="number" min="1" step="any" inputmode="decimal">
+          <div class="row hidden" id="pack-btns" aria-label="Quick quantity"><button type="button" class="btn sm" data-act="qty-quick" data-q="20">+20</button><button type="button" class="btn sm" data-act="qty-quick" data-q="50">+50</button><button type="button" class="btn sm" data-act="qty-quick" data-q="100">+100</button></div></div>
         <div><label for="f-rm">RM Paid</label><input id="f-rm" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
         <div><label for="f-days">Delivery Days</label><input id="f-days" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 9"></div>
         <div><label>&nbsp;</label><div class="calc" id="f-calc" aria-live="polite"></div></div>
@@ -242,6 +261,7 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
         <button class="btn sm" data-act="job-preset" data-p="p1">Industrial Alignment Jig (PLA + M4 Hardware)</button>
         <button class="btn sm" data-act="job-preset" data-p="p2">Reverse-Engineered Car Sensor Mount (PETG + M3 Inserts)</button>
         <button class="btn sm" data-act="job-preset" data-p="p3">Urgent Prototype Electronics Case (PETG + Full Screw Kit)</button>
+        <button class="btn sm" data-act="job-preset" data-p="p4">Event Merch Batch (50x Clicker Keychains)</button>
         <button class="btn sm danger" data-act="job-clear">Clear</button>
       </div>
       <div class="fields three" style="margin-top:12px">
@@ -310,7 +330,7 @@ function seed(){
     purchases:[]
   };
   function fil(id,name,qty,thr,tare,opened,recipes){S.items.push({id:id,type:'filament',name:name,unit:'g',qty:qty,thr:thr,tare:tare,opened:opened,pack:1000,recipes:recipes||{}})}
-  function hw(id,name,cat,qty,thr,pack){S.items.push({id:id,type:'hardware',name:name,cat:cat,unit:'pcs',qty:qty,thr:thr,pack:pack,recipes:{}})}
+  function hw(id,name,cat,qty,thr,pack,fit){S.items.push({id:id,type:'hardware',name:name,cat:cat,unit:'pcs',qty:qty,thr:thr,pack:pack,fitNote:fit||'',recipes:{}})}
   var rf={nozzle:215,bed:60,flow:0.98,dry:'Not needed if opened < 2 weeks',name:'Shopee - FilamentHub MY (West MY)',saved:ago(30)};
   fil('f1','PLA+ Black 1.75mm',820,200,250,ago(5),{'shopee - filamenthub my (west my)':rf});
   fil('f2','PLA White 1.75mm',340,200,250,ago(21),{
@@ -320,19 +340,27 @@ function seed(){
   fil('f4','PETG Black 1.75mm',950,200,250,ago(2),{'kuching 3d supply':{nozzle:235,bed:70,flow:0.96,dry:'Dry 4 h at 65 °C if opened > 3 weeks',name:'Kuching 3D Supply',saved:ago(8)}});
   fil('f5','PLA Silk Blue 1.75mm',150,200,250,ago(12),{});
   fil('f6','PLA+ Orange 1.75mm',1000,200,250,null,{});
-  hw('h1','M3x8 socket cap screw','Screws',140,100,100);
-  hw('h2','M3x12 socket cap screw','Screws',35,60,100);
-  hw('h3','M4x10 socket cap screw','Screws',210,80,100);
-  hw('h4','M4x20 socket cap screw','Screws',18,40,50);
-  hw('h5','M3 hex nut','Nuts',300,100,200);
-  hw('h6','M4 hex nut','Nuts',90,50,100);
-  hw('h7','M3 brass heat-set insert (4mm long)','Heat-set inserts',45,50,50);
-  hw('h8','M4 brass heat-set insert (5.7mm long)','Heat-set inserts',120,40,50);
-  hw('h9','608ZZ bearing','Bearings',12,10,10);
-  hw('h10','LM8UU linear bearing','Bearings',6,4,4);
-  hw('h11','Neodymium magnet 6x3 mm','Magnets',40,20,50);
-  hw('h12','Neodymium magnet 8x3 mm','Magnets',14,20,50);
-  var FH='Shopee - FilamentHub MY (West MY)',KS='Kuching 3D Supply',LZ='Lazada - FastenerMY (West MY)',HS='Hock Seng Hardware, Kuching',BF='Shopee - BudgetFil (West MY)';
+  hw('h1','M3x8 socket cap screw','Screws',140,100,100,'M3 thread, 8 mm long, hex socket (2.5 mm key)');
+  hw('h2','M3x12 socket cap screw','Screws',35,60,100,'M3 thread, 12 mm long, hex socket (2.5 mm key)');
+  hw('h3','M4x10 socket cap screw','Screws',210,80,100,'M4 thread, 10 mm long, hex socket (3 mm key)');
+  hw('h4','M4x20 socket cap screw','Screws',18,40,50,'M4 thread, 20 mm long, hex socket (3 mm key)');
+  hw('h5','M3 hex nut','Nuts',300,100,200,'M3 standard hex nut, 5.5 mm across flats');
+  hw('h6','M4 hex nut','Nuts',90,50,100,'M4 standard hex nut, 7 mm across flats');
+  hw('h7','M3 brass heat-set insert (4mm long)','Heat-set inserts',45,50,50,'M3 thread, 4 mm long, knurled brass');
+  hw('h8','M4 brass heat-set insert (5.7mm long)','Heat-set inserts',120,40,50,'M4 thread, 5.7 mm long, knurled brass');
+  hw('h9','608ZZ bearing','Bearings',12,10,10,'8 mm hole, 22 mm outside, 7 mm wide');
+  hw('h10','LM8UU linear bearing','Bearings',6,4,4,'Fits 8 mm rod, 15 mm outside, 24 mm long');
+  hw('h11','Neodymium magnet 6x3 mm','Magnets',40,20,50,'Round disc, 6 mm wide x 3 mm thick');
+  hw('h12','Neodymium magnet 8x3 mm','Magnets',14,20,50,'Round disc, 8 mm wide x 3 mm thick');
+  hw('h13','Mechanical Clicker Switches','Fidgets & Keychains',38,30,50,'14x14 mm MX-stem clicky switch');
+  hw('h14','Keychain Split Rings + Chain','Fidgets & Keychains',85,40,100,'25 mm ring + 4-link chain');
+  hw('h15','Swivel Lobster Clasps','Fidgets & Keychains',40,20,50,'32 mm metal bag clasp');
+  hw('h16','Jump Rings','Fidgets & Keychains',160,60,200,'6 mm split connector ring');
+  hw('h17','Mini Compression Springs','Springs & Finishing',18,20,50,'0.5x5x15 mm spring, fits standard latch');
+  hw('h18','Steel Hinge Pins','Springs & Finishing',45,20,50,'2x20 mm stainless dowel pin');
+  hw('h19','Stick-On Rubber Feet','Springs & Finishing',90,30,100,'8 mm clear silicone bumper pad');
+  hw('h20','Superglue & Activator','Springs & Finishing',2,2,1,'20 g CA glue + spray bottle');
+  var FH='Shopee - FilamentHub MY (West MY)',KS='Kuching 3D Supply',LZ='Lazada - FastenerMY (West MY)',HS='Hock Seng Hardware, Kuching',BF='Shopee - BudgetFil (West MY)',KP='Shopee - KeebParts MY (West MY)',CB='Lazada - CraftBitsMY (West MY)',MH='Kuching Maker Hub, Kuching';
   function p(item,sup,qty,rmv,days,d){S.purchases.push({id:uid()+S.purchases.length,item:item,supplier:sup,qty:qty,rm:rmv,days:days,date:ago(d)})}
   p('f1',FH,1000,42,9,34); p('f1',FH,1000,41,8,6);
   p('f2',FH,1000,39,11,45); p('f2',KS,1000,72,1,15);
@@ -346,6 +374,8 @@ function seed(){
   p('h7',LZ,100,16.9,12,30); p('h8',HS,50,19.0,1,14);
   p('h9',HS,10,14.0,1,25); p('h10',LZ,8,16.5,8,35);
   p('h11',LZ,50,11.9,9,28); p('h12',LZ,20,8.9,9,28);
+  p('h13',MH,50,28,1,20); p('h13',KP,50,20,9,3); p('h14',CB,100,8,8,12); p('h15',CB,50,15,10,12); p('h16',CB,200,5,8,12);
+  p('h17',HS,50,10,1,16); p('h18',HS,50,10,2,16); p('h19',LZ,100,6,10,25); p('h20',HS,1,14,1,7);
   S.bad[norm(BF)]=true;
   S.job=defaultJob();
   return S;
@@ -364,7 +394,7 @@ function item(id){return state.items.filter(function(i){return i.id===id})[0]}
 /* ---------- derived data ---------- */
 function unitPrice(p){var it=item(p.item);if(!it)return 0;return it.type==='filament'?p.rm/(p.qty/1000):p.rm/p.qty}
 function unitLabel(it){return it.type==='filament'?'/kg':'/unit'}
-function fmtUnitPrice(it,p){var v=unitPrice(p);if(it.type==='filament')return rm(v)+'/kg';return 'RM '+v.toFixed(v<1?3:2)+'/unit'}
+function fmtUnitPrice(it,p){var v=unitPrice(p);if(it.type==='filament')return rm(v)+'/kg';return unitRm(v)+'/unit'}
 function supStats(key){
   var ps=state.purchases.filter(function(p){return norm(p.supplier)===key});
   var tot=0;ps.forEach(function(p){tot+=p.days});
@@ -453,6 +483,7 @@ function hardwareCard(it){
   var low=isLow(it);
   return '<article class="card'+(low?' low':'')+'" data-id="'+it.id+'">'+
    '<div class="row between"><h3>'+esc(it.name)+'</h3>'+(low?'<span class="badge b-red">'+(it.qty<=0?'OUT':'LOW')+'</span>':'<span class="badge b-green">OK</span>')+'</div>'+
+   (it.fitNote?'<div class="fit">Exact size: '+esc(it.fitNote)+'</div>':'')+
    '<div class="row between"><b style="font-size:1.3rem">'+it.qty+' pcs</b><span class="muted">reorder level '+it.thr+'</span></div>'+
    (low?'<div class="muted" style="color:var(--red)">Need '+(it.thr-it.qty+1)+' more to get back above the reorder level.</div>':'')+
    supLine(it)+
@@ -467,6 +498,7 @@ function hardwareCard(it){
    '<details><summary>Edit item</summary><div class="fields two" style="margin-top:6px">'+
      '<div><label>Name</label><input data-edit="name" value="'+esc(it.name)+'"></div>'+
      '<div><label>Reorder level (pcs)</label><input data-edit="thr" type="number" min="0" value="'+it.thr+'"></div>'+
+     '<div><label>Exact Size / Fit Note</label><input data-edit="fitNote" value="'+esc(it.fitNote||'')+'"></div>'+
      '</div><div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="edit-save" data-id="'+it.id+'">Save changes</button></div></details>'+
    '</article>';
 }
@@ -479,7 +511,33 @@ function renderFilament(){
   var list=state.items.filter(function(i){return i.type==='filament'}).sort(function(a,b){return (isLow(b)-isLow(a))||(a.qty-b.qty)});
   $('#filament-grid').innerHTML=list.map(filamentCard).join('')||'<p class="muted">No filament yet. Log a purchase to add one.</p>';
 }
+function hwGroups(){
+  var base=['Screws','Nuts','Heat-set inserts','Bearings','Magnets','Fidgets & Keychains','Springs & Finishing'],seen={};
+  base.forEach(function(g){seen[g]=1});
+  state.items.forEach(function(i){if(i.type==='hardware'&&i.cat&&!seen[i.cat]){seen[i.cat]=1;base.push(i.cat)}});
+  if(!seen['Other'])base.push('Other');
+  return base;
+}
+function renderHwGroupSelect(){
+  var sel=$('#ah-group'),cur=sel.value;
+  sel.innerHTML=hwGroups().map(function(g){return '<option value="'+esc(g)+'">'+esc(g)+'</option>'}).join('');
+  if(cur&&$$('option',sel).some(function(o){return o.value===cur}))sel.value=cur;
+}
+function submitAddHw(e){
+  e.preventDefault();
+  var err=$('#ah-err'),nm=$('#ah-name').value.trim(),grp=$('#ah-group').value,fit=$('#ah-fit').value.trim(),c=$('#ah-count').value,t=$('#ah-thr').value;
+  err.textContent='';
+  if(!nm){err.textContent='Enter an item name.';return}
+  if(state.items.some(function(i){return i.type==='hardware'&&norm(i.name)===norm(nm)})){err.textContent='A hardware item with this name is already on the shelf.';return}
+  var cn=parseInt(c,10),tn=parseInt(t,10);
+  if(c===''||isNaN(cn)||cn<0){err.textContent='Enter the starting count (0 or more).';return}
+  if(t===''||isNaN(tn)||tn<0){err.textContent='Enter the reorder level (0 or more).';return}
+  state.items.push({id:uid(),type:'hardware',name:nm.slice(0,120),cat:grp,unit:'pcs',qty:cn,thr:tn,pack:50,fitNote:fit.slice(0,200),recipes:{}});
+  save();$('#add-hw').reset();$('#add-hw').classList.add('hidden');$('#add-hw-toggle').setAttribute('aria-expanded','false');
+  renderAll();toast('Added '+nm+' to '+grp);
+}
 function renderHardware(){
+  renderHwGroupSelect();
   var cats={},order=[];
   state.items.filter(function(i){return i.type==='hardware'}).forEach(function(i){var c=i.cat||'Other';if(!cats[c]){cats[c]=[];order.push(c)}cats[c].push(i)});
   $('#hardware-groups').innerHTML=order.map(function(c){
@@ -531,6 +589,7 @@ function onItemChange(keepVals){
   $('#f-qty-label').textContent=type==='filament'?'Quantity Added (g)':'Quantity Added (pcs)';
   if(!keepVals||!$('#f-qty').value)$('#f-qty').value=type==='filament'?1000:(it?it.pack:50);
   $('#recipe-box').classList.toggle('hidden',type!=='filament');
+  $('#pack-btns').classList.toggle('hidden',type!=='hardware');
   updateRecipeHint();updateCalc();
 }
 function updateCalc(){
@@ -562,7 +621,7 @@ function submitPurchase(e){
   if(v===NEW){
     var t=$('#f-newtype').value;
     it=t==='filament'?{id:uid(),type:'filament',name:nm,unit:'g',qty:0,thr:200,tare:state.settings.tare,opened:null,pack:1000,recipes:{}}
-                     :{id:uid(),type:'hardware',name:nm,cat:'Other',unit:'pcs',qty:0,thr:20,pack:Math.round(q),recipes:{}};
+                     :{id:uid(),type:'hardware',name:nm,cat:'Other',unit:'pcs',qty:0,thr:20,pack:Math.round(q),fitNote:'',recipes:{}};
     state.items.push(it);
   }
   it.qty=Math.round((it.qty+q)*100)/100;
@@ -590,7 +649,8 @@ var MARGIN_PCT=115; /* 15% reprint safety margin on filament */
 var PRESETS=[
   {id:'p1',name:'Industrial Alignment Jig (PLA + M4 Hardware)',days:7,value:880,lines:[['f1',250],['h3',12],['h6',12],['h4',6],['h8',8]]},
   {id:'p2',name:'Reverse-Engineered Car Sensor Mount (PETG + M3 Inserts)',days:14,value:1350,lines:[['f3',540],['h7',16],['h1',16]]},
-  {id:'p3',name:'Urgent Prototype Electronics Case (PETG + Full Screw Kit)',days:2,value:1200,lines:[['f4',350],['h2',40],['h1',20],['h5',40],['h7',16],['h3',8]]}
+  {id:'p3',name:'Urgent Prototype Electronics Case (PETG + Full Screw Kit)',days:2,value:1200,lines:[['f4',350],['h2',40],['h1',20],['h5',40],['h7',16],['h3',8]]},
+  {id:'p4',name:'Event Merch Batch (50x Clicker Keychains)',days:5,value:750,lines:[['f1',450],['h13',50],['h14',50],['h16',50]]}
 ];
 function defaultJob(){return {name:'',days:null,value:null,lines:[]}}
 function tot(it,unit,qty){return it.type==='filament'?unit*qty/1000:unit*qty}
@@ -663,7 +723,7 @@ function restockMsg(it,buy,src,choice,P,ch){
   else qty=buy+' pcs'+(buy===pk?' (1 pack)':'');
   if(P==null){win=choice==='local'?'as soon as possible':'no rush — within '+(ch.west?(ch.west.min===ch.west.max?ch.west.min:ch.west.min+'–'+ch.west.max):'7–12')+' days is fine'}
   else{var n=Math.max(1,P-1),d=new Date();d.setDate(d.getDate()+n);win='within '+n+' day'+(n===1?'':'s')+' (by '+fmtDate(d)+')'}
-  return 'Hi'+(nm?' '+nm:'')+', this is Stinablis (3D printing & prototyping, Kuching).\nCould I order:\n• '+qty+' '+it.name+'\nTarget delivery: '+win+'.\nPlease confirm stock, total price and the earliest delivery or pickup. Thank you!';
+  return 'Hi'+(nm?' '+nm:'')+', this is Stinablis (3D printing & prototyping, Kuching).\nCould I order:\n• '+qty+' '+it.name+(it.fitNote?'\n  Exact size: '+it.fitNote:'')+'\nTarget delivery: '+win+'.\nPlease confirm stock, total price and the earliest delivery or pickup. Thank you!';
 }
 function plan(r){
   var P=state.job.days,ch=channelStats(),choice=chooseChannel(P,ch),items=[],cw=0,cl=0,miss=0;
@@ -750,7 +810,7 @@ function cleanState(d){
     var id=str(i.id,40);if(!safeKey(id)||ids[id])return;
     var fil=i.type==='filament',it={id:id,type:i.type,name:str(i.name,120)||'Unnamed item',unit:fil?'g':'pcs',qty:Math.max(0,num(i.qty,0)),thr:Math.max(0,num(i.thr,0)),pack:Math.max(1,num(i.pack,fil?1000:50)),recipes:{}};
     if(fil){it.tare=Math.max(0,num(i.tare,250));it.opened=(typeof i.opened==='string'&&DATE_RE.test(i.opened))?i.opened:null}
-    else it.cat=str(i.cat,40)||'Other';
+    else{it.cat=str(i.cat,40)||'Other';it.fitNote=str(i.fitNote,200)}
     if(i.recipes&&typeof i.recipes==='object')Object.keys(i.recipes).forEach(function(k){
       var x=i.recipes[k];if(!safeKey(k)||!x||typeof x!=='object')return;
       it.recipes[str(k,150)]={nozzle:rv(x.nozzle),bed:rv(x.bed),flow:rv(x.flow),dry:str(x.dry,200),name:str(x.name,150),saved:str(x.saved,10)};
@@ -856,6 +916,7 @@ function qcardHtml(it){
     '<div class="qc-name">'+esc(it.name)+'</div>';
   h+=row('Reorder level',it.thr+(fil?' g':' pcs'));
   if(fil)h+=row('Empty spool weight',it.tare+' g');
+  else if(it.fitNote)h+=row('Exact size',it.fitNote);
   h+=row('Main supplier',st?st.sup:'none logged yet');
   h+=row('Last price',st?fmtUnitPrice(it,st.last):'—');
   h+=row('Usual delivery time',st?'~'+Math.round(st.eta)+' day'+(Math.round(st.eta)===1?'':'s'):'—');
@@ -897,6 +958,7 @@ function act(btn){
     var g=function(k){var e=$('[data-edit="'+k+'"]',card);return e?e.value:null};
     var nm=g('name');if(nm!==null&&nm.trim())it.name=nm.trim();
     var th=g('thr');if(th!==null&&th!==''&&+th>=0)it.thr=+th;
+    if(it.type==='hardware'){var fnv=g('fitNote');if(fnv!==null)it.fitNote=fnv.trim()}
     if(it.type==='filament'){
       var ta=g('tare');if(ta!==null&&ta!==''&&+ta>=0)it.tare=+ta;
       var op=g('opened');it.opened=op||null;
@@ -936,6 +998,12 @@ function act(btn){
     save();renderJob();
   }else if(a==='job-remove'){
     state.job.lines.splice(parseInt(btn.getAttribute('data-i'),10),1);save();renderJob();
+  }else if(a==='qty-quick'){
+    $('#f-qty').value=btn.getAttribute('data-q');updateCalc();
+  }else if(a==='toggle-add-hw'){
+    var f=$('#add-hw'),open=f.classList.contains('hidden');
+    f.classList.toggle('hidden',!open);$('#add-hw-toggle').setAttribute('aria-expanded',open?'true':'false');
+    if(open){renderHwGroupSelect();$('#ah-err').textContent='';$('#ah-name').focus()}else f.reset();
   }else if(a==='export'){
     exportBackup();
   }else if(a==='import'){
@@ -978,6 +1046,7 @@ document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCards()
 $('#f-item').addEventListener('change',function(){$('#f-qty').value='';onItemChange(false)});
 $('#f-newtype').addEventListener('change',function(){$('#f-qty').value='';onItemChange(false)});
 $('#logger').addEventListener('submit',submitPurchase);
+$('#add-hw').addEventListener('submit',submitAddHw);
 
 state=load()||seed();
 if(!state.job)state.job=defaultJob();
