@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Stinablis ShopGuard</title>
+<style>
+:root{
+  --bg:#f4f6f8; --card:#fff; --ink:#1b2430; --muted:#5d6b7a; --line:#dde3ea;
+  --brand:#0b6e4f; --brand-ink:#fff; --accent:#e8f4ef;
+  --red:#c0262d; --red-bg:#fdecec; --amber:#a35a00; --amber-bg:#fff3de;
+  --green:#18794e; --green-bg:#e3f6ec; --blue:#1d5fa8; --blue-bg:#e6f0fb;
+  --radius:12px;
+}
+*{box-sizing:border-box}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--ink);font:15px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{background:var(--brand);color:var(--brand-ink);padding:14px 16px 0;position:sticky;top:0;z-index:10}
+.wrap{max-width:1100px;margin:0 auto}
+header h1{margin:0;font-size:1.2rem;letter-spacing:.2px}
+header p{margin:2px 0 10px;font-size:.82rem;opacity:.85}
+nav{display:flex;gap:4px;overflow-x:auto}
+nav button{flex:1;min-width:0;border:0;background:rgba(255,255,255,.14);color:#fff;padding:10px 8px;font:inherit;font-weight:600;border-radius:10px 10px 0 0;cursor:pointer;white-space:nowrap}
+nav button[aria-selected="true"]{background:var(--bg);color:var(--brand)}
+main{padding:14px 16px 90px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px}
+.stat{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:10px 12px}
+.stat b{display:block;font-size:1.4rem;line-height:1.1}
+.stat span{font-size:.78rem;color:var(--muted)}
+.stat.bad b{color:var(--red)} .stat.warn b{color:var(--amber)}
+.grid{display:grid;gap:12px;grid-template-columns:1fr}
+@media(min-width:700px){.grid{grid-template-columns:1fr 1fr}}
+@media(min-width:1000px){.grid{grid-template-columns:1fr 1fr 1fr}}
+.card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;display:flex;flex-direction:column;gap:8px}
+.card.low{border-color:var(--red);box-shadow:0 0 0 1px var(--red) inset}
+.card h3{margin:0;font-size:1rem}
+.row{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.row.between{justify-content:space-between}
+.muted{color:var(--muted);font-size:.84rem}
+.badge{display:inline-block;padding:2px 9px;border-radius:99px;font-size:.74rem;font-weight:700;white-space:nowrap}
+.b-red{background:var(--red-bg);color:var(--red)} .b-amber{background:var(--amber-bg);color:var(--amber)}
+.b-green{background:var(--green-bg);color:var(--green)} .b-blue{background:var(--blue-bg);color:var(--blue)}
+.b-grey{background:#eceff3;color:#4a5662}
+.bar{height:10px;background:#e7ebf0;border-radius:99px;overflow:hidden}
+.bar i{display:block;height:100%;background:var(--green);border-radius:99px}
+.bar.low i{background:var(--red)}
+.hum{padding:7px 10px;border-radius:8px;font-size:.84rem}
+.hum.ok{background:var(--green-bg);color:var(--green)} .hum.amber{background:var(--amber-bg);color:var(--amber)}
+.hum.red{background:var(--red-bg);color:var(--red);font-weight:600} .hum.sealed{background:var(--blue-bg);color:var(--blue)}
+.recipe{background:var(--accent);border-radius:8px;padding:8px 10px;font-size:.84rem}
+.recipe div+div{margin-top:3px}
+.scale{border:1px dashed var(--line);border-radius:8px;padding:8px 10px;background:#fafbfc}
+label{display:block;font-size:.8rem;font-weight:600;margin-bottom:3px}
+input,select,textarea{width:100%;font:inherit;padding:9px 10px;border:1px solid #c5ced8;border-radius:8px;background:#fff;color:var(--ink);min-height:40px}
+input:focus,select:focus,button:focus-visible,summary:focus-visible{outline:3px solid #7fc4a8;outline-offset:1px}
+button.btn{font:inherit;font-weight:600;border:1px solid #b9c4cf;background:#fff;color:var(--ink);padding:8px 12px;border-radius:8px;cursor:pointer;min-height:40px}
+button.btn.primary{background:var(--brand);border-color:var(--brand);color:#fff}
+button.btn.danger{border-color:var(--red);color:var(--red)}
+button.btn.sm{padding:5px 10px;min-height:34px;font-size:.85rem}
+button.step{width:40px;padding:0;font-size:1.2rem}
+.fields{display:grid;gap:10px;grid-template-columns:1fr}
+@media(min-width:620px){.fields.two{grid-template-columns:1fr 1fr}.fields.four{grid-template-columns:repeat(4,1fr)}}
+.fields.four{grid-template-columns:1fr 1fr}
+@media(min-width:760px){.fields.four{grid-template-columns:repeat(4,1fr)}}
+.panel{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:14px;margin-bottom:14px}
+.panel h2{margin:0 0 10px;font-size:1.05rem}
+details>summary{cursor:pointer;font-weight:600;font-size:.88rem;color:var(--brand);padding:4px 0}
+.calc{font-weight:700;color:var(--brand);min-height:1.4em}
+.err{color:var(--red);font-size:.85rem;min-height:1.2em}
+table{width:100%;border-collapse:collapse;font-size:.86rem}
+th,td{text-align:left;padding:7px 6px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:.74rem;text-transform:uppercase;color:var(--muted)}
+.tscroll{overflow-x:auto}
+#toast{position:fixed;left:50%;bottom:18px;transform:translateX(-50%);background:#1b2430;color:#fff;padding:10px 16px;border-radius:10px;font-size:.9rem;opacity:0;pointer-events:none;transition:opacity .2s;max-width:90vw;z-index:50}
+#toast.show{opacity:1}
+footer{max-width:1100px;margin:0 auto;padding:0 16px 30px;display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;align-items:center}
+.hidden{display:none!important}
+</style>
+</head>
+<body>
+<header>
+  <div class="wrap">
+    <h1>Stinablis ShopGuard</h1>
+    <p>Never run out blind. Never forget what you paid, where, or how it printed.</p>
+    <nav role="tablist" aria-label="Sections">
+      <button role="tab" data-tab="filament" id="tab-filament">Filament</button>
+      <button role="tab" data-tab="hardware" id="tab-hardware">Hardware</button>
+      <button role="tab" data-tab="purchases" id="tab-purchases">Purchases</button>
+    </nav>
+  </div>
+</header>
+
+<main class="wrap">
+  <div class="stats" id="stats"></div>
+
+  <section id="view-filament" role="tabpanel" aria-labelledby="tab-filament">
+    <details class="panel" id="settings">
+      <summary>Settings: humidity warning days &amp; default spool tare</summary>
+      <div class="fields four" style="margin-top:8px">
+        <div><label for="set-amber">Amber after (days open)</label><input id="set-amber" type="number" min="1" inputmode="numeric"></div>
+        <div><label for="set-red">Red after (days open)</label><input id="set-red" type="number" min="1" inputmode="numeric"></div>
+        <div><label for="set-tare">Default empty spool (g)</label><input id="set-tare" type="number" min="0" inputmode="numeric"></div>
+        <div style="align-self:end"><button class="btn primary" data-act="save-settings">Save settings</button></div>
+      </div>
+    </details>
+    <div class="grid" id="filament-grid"></div>
+  </section>
+
+  <section id="view-hardware" role="tabpanel" aria-labelledby="tab-hardware" class="hidden">
+    <div id="hardware-groups"></div>
+  </section>
+
+  <section id="view-purchases" role="tabpanel" aria-labelledby="tab-purchases" class="hidden">
+    <form class="panel" id="logger" novalidate>
+      <h2>Log a restock (15 seconds)</h2>
+      <div class="fields two">
+        <div>
+          <label for="f-item">Item</label>
+          <select id="f-item"></select>
+        </div>
+        <div>
+          <label for="f-supplier">Supplier / Link</label>
+          <input id="f-supplier" list="supplier-list" placeholder="e.g. Kuching 3D Supply, or a Shopee link" autocomplete="off">
+          <datalist id="supplier-list"></datalist>
+        </div>
+      </div>
+
+      <div id="new-item" class="fields two hidden" style="margin-top:10px">
+        <div><label for="f-newname">New item name</label><input id="f-newname" placeholder="e.g. PLA+ Red 1.75mm"></div>
+        <div><label for="f-newtype">Type</label>
+          <select id="f-newtype"><option value="filament">Filament spool</option><option value="hardware">Hardware (screws, nuts, inserts...)</option></select></div>
+      </div>
+
+      <div class="fields four" style="margin-top:10px">
+        <div><label for="f-qty" id="f-qty-label">Quantity Added (g)</label><input id="f-qty" type="number" min="1" step="any" inputmode="decimal"></div>
+        <div><label for="f-rm">RM Paid</label><input id="f-rm" type="number" min="0" step="0.01" inputmode="decimal" placeholder="0.00"></div>
+        <div><label for="f-days">Delivery Days</label><input id="f-days" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 9"></div>
+        <div><label>&nbsp;</label><div class="calc" id="f-calc" aria-live="polite"></div></div>
+      </div>
+
+      <div class="row" style="margin-top:8px">
+        <input type="checkbox" id="f-bad" style="width:auto;min-height:0"><label for="f-bad" style="margin:0;font-weight:500">Flag this supplier: Avoid — Bad Batch</label>
+      </div>
+
+      <details id="recipe-box" class="hidden" style="margin-top:8px">
+        <summary>Optional: Verified Slicer Recipe for this filament</summary>
+        <div class="fields four" style="margin-top:6px">
+          <div><label for="r-nozzle">Nozzle °C</label><input id="r-nozzle" type="number" min="150" max="350" inputmode="numeric"></div>
+          <div><label for="r-bed">Bed °C</label><input id="r-bed" type="number" min="0" max="130" inputmode="numeric"></div>
+          <div><label for="r-flow">Flow Ratio</label><input id="r-flow" type="number" min="0.5" max="1.5" step="0.01" inputmode="decimal" placeholder="0.98"></div>
+          <div><label for="r-dry">Drying Note</label><input id="r-dry" placeholder="e.g. 50 °C for 4 h"></div>
+        </div>
+        <div class="muted" id="recipe-hint" style="margin-top:4px"></div>
+      </details>
+
+      <div class="err" id="f-err" role="alert"></div>
+      <button class="btn primary" type="submit">Save purchase &amp; add to stock</button>
+    </form>
+
+    <div class="panel">
+      <h2>Suppliers</h2>
+      <div class="tscroll"><table><thead><tr><th>Supplier</th><th>Reliability</th><th>Orders</th><th>Avg days</th><th></th></tr></thead><tbody id="sup-body"></tbody></table></div>
+    </div>
+
+    <div class="panel">
+      <h2>Purchase history</h2>
+      <div class="tscroll"><table><thead><tr><th>Date</th><th>Item</th><th>Supplier</th><th>Qty</th><th>RM</th><th>Unit price</th><th>Days</th></tr></thead><tbody id="hist-body"></tbody></table></div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <span class="muted">Stinablis ShopGuard · data is saved in this browser only</span>
+  <button class="btn danger sm" data-act="reset" id="reset-btn">Reset Demo Data</button>
+</footer>
+<div id="toast" role="status" aria-live="polite"></div>
+
+<script>
+(function(){
+'use strict';
+var KEY='stinablis_shopguard_v1';
+var $=function(s,r){return (r||document).querySelector(s)};
+var $$=function(s,r){return Array.prototype.slice.call((r||document).querySelectorAll(s))};
+function esc(s){return String(s==null?'':s).replace(/[&<>"']/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]})}
+function pad(n){return n<10?'0'+n:''+n}
+function isoOf(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate())}
+function today(){return isoOf(new Date())}
+function ago(n){var d=new Date();d.setDate(d.getDate()-n);return isoOf(d)}
+function daysSince(s){var a=s.split('-'),t=new Date();var d0=new Date(+a[0],+a[1]-1,+a[2]);var d1=new Date(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((d1-d0)/864e5)}
+function norm(s){return String(s).trim().toLowerCase()}
+function unitRm(v){return 'RM '+v.toFixed(v>=0.1?2:3)}
+function rm(n){return 'RM '+(Math.round(n*100)/100).toFixed(2)}
+function uid(){return 'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
+
+/* ---------- state & persistence ---------- */
+var state, tab='filament', memStore=null;
+
+function seed(){
+  var S={
+    settings:{amber:14,red:30,tare:250},
+    bad:{},
+    items:[],
+    purchases:[]
+  };
+  function fil(id,name,qty,thr,tare,opened,recipes){S.items.push({id:id,type:'filament',name:name,unit:'g',qty:qty,thr:thr,tare:tare,opened:opened,pack:1000,recipes:recipes||{}})}
+  function hw(id,name,cat,qty,thr,pack){S.items.push({id:id,type:'hardware',name:name,cat:cat,unit:'pcs',qty:qty,thr:thr,pack:pack,recipes:{}})}
+  var rf={nozzle:215,bed:60,flow:0.98,dry:'Not needed if opened < 2 weeks',name:'Shopee - FilamentHub MY (West MY)',saved:ago(30)};
+  fil('f1','PLA+ Black 1.75mm',820,200,250,ago(5),{'shopee - filamenthub my (west my)':rf});
+  fil('f2','PLA White 1.75mm',340,200,250,ago(21),{
+    'shopee - filamenthub my (west my)':{nozzle:210,bed:60,flow:0.97,dry:'45 °C for 4 h if stringing',name:'Shopee - FilamentHub MY (West MY)',saved:ago(40)},
+    'kuching 3d supply':{nozzle:205,bed:55,flow:1.00,dry:'Prints fine straight from bag',name:'Kuching 3D Supply',saved:ago(12)}});
+  fil('f3','PETG Grey 1.75mm',610,200,240,ago(38),{'shopee - filamenthub my (west my)':{nozzle:240,bed:75,flow:0.95,dry:'65 °C for 6 h before use (humid Kuching)',name:'Shopee - FilamentHub MY (West MY)',saved:ago(35)}});
+  fil('f4','PETG Black 1.75mm',950,200,250,ago(2),{'kuching 3d supply':{nozzle:235,bed:70,flow:0.96,dry:'Dry 4 h at 65 °C if opened > 3 weeks',name:'Kuching 3D Supply',saved:ago(8)}});
+  fil('f5','PLA Silk Blue 1.75mm',150,200,250,ago(12),{});
+  fil('f6','PLA+ Orange 1.75mm',1000,200,250,null,{});
+  hw('h1','M3x8 socket cap screw','Screws',140,100,100);
+  hw('h2','M3x12 socket cap screw','Screws',35,60,100);
+  hw('h3','M4x10 socket cap screw','Screws',210,80,100);
+  hw('h4','M4x20 socket cap screw','Screws',18,40,50);
+  hw('h5','M3 hex nut','Nuts',300,100,200);
+  hw('h6','M4 hex nut','Nuts',90,50,100);
+  hw('h7','M3 brass heat-set insert (4mm long)','Heat-set inserts',45,50,50);
+  hw('h8','M4 brass heat-set insert (5.7mm long)','Heat-set inserts',120,40,50);
+  hw('h9','608ZZ bearing','Bearings',12,10,10);
+  hw('h10','LM8UU linear bearing','Bearings',6,4,4);
+  hw('h11','Neodymium magnet 6x3 mm','Magnets',40,20,50);
+  hw('h12','Neodymium magnet 8x3 mm','Magnets',14,20,50);
+  var FH='Shopee - FilamentHub MY (West MY)',KS='Kuching 3D Supply',LZ='Lazada - FastenerMY (West MY)',HS='Hock Seng Hardware, Kuching',BF='Shopee - BudgetFil (West MY)';
+  function p(item,sup,qty,rmv,days,d){S.purchases.push({id:uid()+S.purchases.length,item:item,supplier:sup,qty:qty,rm:rmv,days:days,date:ago(d)})}
+  p('f1',FH,1000,42,9,34); p('f1',FH,1000,41,8,6);
+  p('f2',FH,1000,39,11,45); p('f2',KS,1000,72,1,15);
+  p('f3',FH,1000,48,10,52); p('f3',BF,1000,38,12,50);
+  p('f4',KS,1000,79,1,10); p('f4',KS,1000,82,2,3);
+  p('f5',KS,1000,89,1,20);
+  p('f6',FH,1000,45,7,4);
+  p('h1',LZ,200,9.9,9,40); p('h2',HS,100,7.5,1,18);
+  p('h3',LZ,200,12.8,10,40); p('h4',HS,50,6.0,1,9);
+  p('h5',LZ,500,10.5,9,40); p('h6',HS,100,4.2,1,22);
+  p('h7',LZ,100,16.9,12,30); p('h8',HS,50,19.0,1,14);
+  p('h9',HS,10,14.0,1,25); p('h10',LZ,8,16.5,8,35);
+  p('h11',LZ,50,11.9,9,28); p('h12',LZ,20,8.9,9,28);
+  S.bad[norm(BF)]=true;
+  return S;
+}
+function load(){
+  try{var r=localStorage.getItem(KEY);if(r){var s=JSON.parse(r);if(s&&s.items&&s.purchases&&s.settings)return s}}catch(e){}
+  if(memStore)return memStore;
+  return null;
+}
+function save(){
+  memStore=state;
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(e){}
+}
+function item(id){return state.items.filter(function(i){return i.id===id})[0]}
+
+/* ---------- derived data ---------- */
+function unitPrice(p){var it=item(p.item);if(!it)return 0;return it.type==='filament'?p.rm/(p.qty/1000):p.rm/p.qty}
+function unitLabel(it){return it.type==='filament'?'/kg':'/unit'}
+function fmtUnitPrice(it,p){var v=unitPrice(p);if(it.type==='filament')return rm(v)+'/kg';return 'RM '+v.toFixed(v<1?3:2)+'/unit'}
+function supStats(key){
+  var ps=state.purchases.filter(function(p){return norm(p.supplier)===key});
+  var tot=0;ps.forEach(function(p){tot+=p.days});
+  return {n:ps.length,avg:ps.length?tot/ps.length:0,name:ps.length?ps[ps.length-1].supplier:key};
+}
+function badge(key){
+  if(state.bad[key])return {t:'Avoid — Bad Batch',c:'b-red'};
+  var s=supStats(key);
+  if(!s.n)return {t:'New supplier',c:'b-grey'};
+  if(s.avg<=2)return {t:'Fast Local Kuching',c:'b-green'};
+  if(s.avg>=7)return {t:'Cheap West MY — 7+ Days',c:'b-amber'};
+  return {t:'Regional — '+Math.round(s.avg)+' days',c:'b-blue'};
+}
+function badgeHtml(key){var b=badge(key);return '<span class="badge '+b.c+'">'+esc(b.t)+'</span>'}
+function itemStats(it){
+  var ps=state.purchases.filter(function(p){return p.item===it.id});
+  if(!ps.length)return null;
+  var by={};ps.forEach(function(p){var k=norm(p.supplier);(by[k]=by[k]||[]).push(p)});
+  var best=null;
+  Object.keys(by).forEach(function(k){
+    var l=by[k],last=l[l.length-1].date;
+    if(state.bad[k])return;
+    if(!best||l.length>by[best].length||(l.length===by[best].length&&last>by[best][by[best].length-1].date))best=k;
+  });
+  if(!best)best=Object.keys(by)[0];
+  var bl=by[best],tot=0;bl.forEach(function(p){tot+=p.days});
+  var latest=ps.slice().sort(function(a,b){return a.date<b.date?-1:a.date>b.date?1:0}).pop();
+  return {sup:bl[bl.length-1].supplier,key:best,eta:tot/bl.length,last:latest};
+}
+function isLow(it){return it.qty<=it.thr}
+function humidity(it){
+  if(!it.opened)return {lvl:'sealed',text:'Sealed — not opened yet',days:null};
+  var d=daysSince(it.opened),s=state.settings;
+  if(d>=s.red)return {lvl:'red',days:d,text:'Opened '+d+' days ago — DRY BEFORE USE (4–6 h). Humid Kuching air has likely soaked it.'};
+  if(d>=s.amber)return {lvl:'amber',days:d,text:'Opened '+d+' days ago — moisture risk. Store sealed with desiccant; dry if it pops or strings.'};
+  return {lvl:'ok',days:d,text:'Opened '+d+' days ago — moisture OK'};
+}
+
+/* ---------- render ---------- */
+function renderStats(){
+  var low=state.items.filter(isLow).length;
+  var hum=state.items.filter(function(i){if(i.type!=='filament')return false;var h=humidity(i);return h.lvl==='amber'||h.lvl==='red'}).length;
+  $('#stats').innerHTML=
+    '<div class="stat '+(low?'bad':'')+'"><b>'+low+'</b><span>Low / out of stock</span></div>'+
+    '<div class="stat '+(hum?'warn':'')+'"><b>'+hum+'</b><span>Humidity warnings</span></div>'+
+    '<div class="stat"><b>'+state.items.length+'</b><span>Items tracked</span></div>';
+}
+function supLine(it){
+  var st=itemStats(it);
+  if(!st)return '<div class="muted">No purchases logged yet.</div>';
+  return '<div class="row"><span class="muted">#1 supplier:</span> <b>'+esc(st.sup)+'</b> '+badgeHtml(st.key)+'</div>'+
+    '<div class="muted">Last paid '+esc(fmtUnitPrice(it,st.last))+' · typical ETA ~'+Math.round(st.eta)+' day'+(Math.round(st.eta)===1?'':'s')+'</div>';
+}
+function recipeHtml(it){
+  var ks=Object.keys(it.recipes||{});
+  if(!ks.length)return '<div class="muted">No verified slicer recipe yet. Add one when you log a purchase.</div>';
+  var h='<div class="recipe"><b>Verified Slicer Recipe</b>';
+  ks.forEach(function(k){var r=it.recipes[k];
+    h+='<div><i>'+esc(r.name)+':</i> Nozzle '+esc(r.nozzle)+' °C · Bed '+esc(r.bed)+' °C · Flow '+esc(r.flow)+(r.dry?' · '+esc(r.dry):'')+'</div>'});
+  return h+'</div>';
+}
+function filamentCard(it){
+  var low=isLow(it),h=humidity(it),pct=Math.max(0,Math.min(100,it.qty/1000*100));
+  return '<article class="card'+(low?' low':'')+'" data-id="'+it.id+'">'+
+   '<div class="row between"><h3>'+esc(it.name)+'</h3>'+(low?'<span class="badge b-red">'+(it.qty<=0?'OUT':'LOW')+'</span>':'<span class="badge b-green">OK</span>')+'</div>'+
+   '<div class="bar'+(low?' low':'')+'" role="img" aria-label="'+it.qty+' grams left"><i style="width:'+pct+'%"></i></div>'+
+   '<div class="row between"><b>'+Math.round(it.qty)+' g net</b><span class="muted">reorder floor '+it.thr+' g</span></div>'+
+   '<div class="hum '+h.lvl+'">'+esc(h.text)+'</div>'+
+   supLine(it)+recipeHtml(it)+
+   '<div class="scale"><label for="sc-'+it.id+'">Scale reading — spool + filament (g)</label>'+
+     '<div class="row"><input id="sc-'+it.id+'" data-scale="'+it.id+'" type="number" inputmode="decimal" min="0" placeholder="e.g. 590" style="flex:1;min-width:110px">'+
+     '<button class="btn primary sm" data-act="scale-save" data-id="'+it.id+'">Update net g</button></div>'+
+     '<div class="muted" data-scale-out="'+it.id+'">Empty spool tare: '+it.tare+' g — enter a reading to see net grams.</div></div>'+
+   '<div class="row"><button class="btn sm" data-act="restock" data-id="'+it.id+'">Restock</button>'+
+     (it.opened?'':'<button class="btn sm" data-act="open-today" data-id="'+it.id+'">Mark opened today</button>')+'</div>'+
+   '<details><summary>Edit spool</summary><div class="fields two" style="margin-top:6px">'+
+     '<div><label>Name</label><input data-edit="name" value="'+esc(it.name)+'"></div>'+
+     '<div><label>Empty spool tare (g)</label><input data-edit="tare" type="number" min="0" value="'+it.tare+'"></div>'+
+     '<div><label>Reorder floor (g)</label><input data-edit="thr" type="number" min="0" value="'+it.thr+'"></div>'+
+     '<div><label>Opened date</label><input data-edit="opened" type="date" value="'+esc(it.opened||'')+'"></div>'+
+     '</div><div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="edit-save" data-id="'+it.id+'">Save changes</button></div></details>'+
+   '</article>';
+}
+function hardwareCard(it){
+  var low=isLow(it);
+  return '<article class="card'+(low?' low':'')+'" data-id="'+it.id+'">'+
+   '<div class="row between"><h3>'+esc(it.name)+'</h3>'+(low?'<span class="badge b-red">'+(it.qty<=0?'OUT':'LOW')+'</span>':'<span class="badge b-green">OK</span>')+'</div>'+
+   '<div class="row between"><b style="font-size:1.3rem">'+it.qty+' pcs</b><span class="muted">reorder floor '+it.thr+'</span></div>'+
+   (low?'<div class="muted" style="color:var(--red)">Short by '+(it.thr-it.qty+1)+' to clear the floor.</div>':'')+
+   supLine(it)+
+   '<div class="row">'+
+     '<button class="btn step" data-act="adj" data-d="-10" data-id="'+it.id+'" aria-label="Minus 10">−10</button>'+
+     '<button class="btn step" data-act="adj" data-d="-1" data-id="'+it.id+'" aria-label="Minus 1">−</button>'+
+     '<input data-count="'+it.id+'" type="number" min="0" inputmode="numeric" value="'+it.qty+'" style="width:84px" aria-label="Exact count">'+
+     '<button class="btn step" data-act="adj" data-d="1" data-id="'+it.id+'" aria-label="Plus 1">+</button>'+
+     '<button class="btn step" data-act="adj" data-d="10" data-id="'+it.id+'" aria-label="Plus 10">+10</button>'+
+   '</div>'+
+   '<div class="row"><button class="btn sm" data-act="count-save" data-id="'+it.id+'">Set exact count</button><button class="btn sm" data-act="restock" data-id="'+it.id+'">Restock</button></div>'+
+   '<details><summary>Edit item</summary><div class="fields two" style="margin-top:6px">'+
+     '<div><label>Name</label><input data-edit="name" value="'+esc(it.name)+'"></div>'+
+     '<div><label>Low-stock threshold</label><input data-edit="thr" type="number" min="0" value="'+it.thr+'"></div>'+
+     '</div><div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="edit-save" data-id="'+it.id+'">Save changes</button></div></details>'+
+   '</article>';
+}
+function renderFilament(){
+  var s=state.settings;
+  var a=$('#set-amber'),r=$('#set-red'),t=$('#set-tare');
+  if(document.activeElement!==a)a.value=s.amber;
+  if(document.activeElement!==r)r.value=s.red;
+  if(document.activeElement!==t)t.value=s.tare;
+  var list=state.items.filter(function(i){return i.type==='filament'}).sort(function(a,b){return (isLow(b)-isLow(a))||(a.qty-b.qty)});
+  $('#filament-grid').innerHTML=list.map(filamentCard).join('')||'<p class="muted">No filament yet. Log a purchase to add one.</p>';
+}
+function renderHardware(){
+  var cats={},order=[];
+  state.items.filter(function(i){return i.type==='hardware'}).forEach(function(i){var c=i.cat||'Other';if(!cats[c]){cats[c]=[];order.push(c)}cats[c].push(i)});
+  $('#hardware-groups').innerHTML=order.map(function(c){
+    return '<h2 style="font-size:1.05rem;margin:14px 0 8px">'+esc(c)+'</h2><div class="grid">'+cats[c].map(hardwareCard).join('')+'</div>'}).join('')||'<p class="muted">No hardware yet.</p>';
+}
+function renderPurchases(){
+  var keys={};state.purchases.forEach(function(p){keys[norm(p.supplier)]=1});
+  var ks=Object.keys(keys);
+  $('#sup-body').innerHTML=ks.map(function(k){var s=supStats(k);
+    return '<tr><td>'+esc(s.name)+'</td><td>'+badgeHtml(k)+'</td><td>'+s.n+'</td><td>'+s.avg.toFixed(1)+'</td><td><button class="btn sm" data-act="flag" data-key="'+esc(k)+'">'+(state.bad[k]?'Clear flag':'Flag bad batch')+'</button></td></tr>'}).join('');
+  $('#supplier-list').innerHTML=ks.map(function(k){return '<option value="'+esc(supStats(k).name)+'">'}).join('');
+  var ps=state.purchases.slice().sort(function(a,b){return a.date<b.date?1:a.date>b.date?-1:0});
+  $('#hist-body').innerHTML=ps.map(function(p){var it=item(p.item);if(!it)return '';
+    return '<tr><td>'+esc(p.date)+'</td><td>'+esc(it.name)+'</td><td>'+esc(p.supplier)+'</td><td>'+p.qty+(it.type==='filament'?' g':'')+'</td><td>'+rm(p.rm)+'</td><td>'+esc(fmtUnitPrice(it,p))+'</td><td>'+p.days+'</td></tr>'}).join('');
+  renderItemSelect();
+}
+var NEW='__new__';
+function renderItemSelect(){
+  var sel=$('#f-item'),cur=sel.value;
+  var f=state.items.filter(function(i){return i.type==='filament'}),h=state.items.filter(function(i){return i.type==='hardware'});
+  function opts(l){return l.map(function(i){return '<option value="'+i.id+'">'+esc(i.name)+'</option>'}).join('')}
+  sel.innerHTML='<optgroup label="Filament">'+opts(f)+'</optgroup><optgroup label="Hardware">'+opts(h)+'</optgroup><option value="'+NEW+'">+ New item...</option>';
+  if(cur&&$$('option',sel).some(function(o){return o.value===cur}))sel.value=cur;
+  onItemChange(true);
+}
+function renderAll(){
+  renderStats();renderFilament();renderHardware();renderPurchases();showTab(tab);
+}
+function showTab(t){
+  tab=t;
+  ['filament','hardware','purchases'].forEach(function(n){
+    $('#view-'+n).classList.toggle('hidden',n!==t);
+    $('#tab-'+n).setAttribute('aria-selected',n===t?'true':'false');
+  });
+}
+var toastT;
+function toast(msg){var el=$('#toast');el.textContent=msg;el.classList.add('show');clearTimeout(toastT);toastT=setTimeout(function(){el.classList.remove('show')},2600)}
+
+/* ---------- logger form ---------- */
+function curType(){
+  var v=$('#f-item').value;
+  if(v===NEW)return $('#f-newtype').value;
+  var it=item(v);return it?it.type:'filament';
+}
+function onItemChange(keepVals){
+  var v=$('#f-item').value,isNew=v===NEW;
+  $('#new-item').classList.toggle('hidden',!isNew);
+  var type=curType(),it=isNew?null:item(v);
+  $('#f-qty-label').textContent=type==='filament'?'Quantity Added (g)':'Quantity Added (pcs)';
+  if(!keepVals||!$('#f-qty').value)$('#f-qty').value=type==='filament'?1000:(it?it.pack:50);
+  $('#recipe-box').classList.toggle('hidden',type!=='filament');
+  updateRecipeHint();updateCalc();
+}
+function updateCalc(){
+  var q=parseFloat($('#f-qty').value),r=parseFloat($('#f-rm').value),type=curType(),el=$('#f-calc');
+  if(!(q>0)||!(r>=0)||$('#f-rm').value===''){el.textContent='';return}
+  el.textContent=type==='filament'?'= '+rm(r/(q/1000))+' per kg':'= '+unitRm(r/q)+' per unit';
+}
+function updateRecipeHint(){
+  var h=$('#recipe-hint'),v=$('#f-item').value,it=item(v),sup=norm($('#f-supplier').value);
+  if(!it||it.type!=='filament'){h.textContent='';return}
+  var n=Object.keys(it.recipes||{}).length;
+  if(sup&&n&&!it.recipes[sup])h.textContent='New supplier for this filament — save a recipe so print quality stays predictable. Existing recipes are kept.';
+  else if(sup&&it.recipes[sup])h.textContent='A recipe for this supplier already exists. Fill the fields to update it, or leave blank to keep it.';
+  else h.textContent='';
+}
+function submitPurchase(e){
+  e.preventDefault();
+  var err=$('#f-err');err.textContent='';
+  var v=$('#f-item').value,sup=$('#f-supplier').value.trim(),q=parseFloat($('#f-qty').value),r=parseFloat($('#f-rm').value),d=parseInt($('#f-days').value,10);
+  var it;
+  if(v===NEW){
+    var nm=$('#f-newname').value.trim();
+    if(!nm){err.textContent='Enter a name for the new item.';return}
+  }else{it=item(v);if(!it){err.textContent='Choose an item.';return}}
+  if(!sup){err.textContent='Enter a supplier or link.';return}
+  if(!(q>0)){err.textContent='Quantity Added must be more than 0.';return}
+  if(isNaN(r)||r<0){err.textContent='Enter the RM paid (0 or more).';return}
+  if(isNaN(d)||d<0){err.textContent='Enter delivery days (0 or more).';return}
+  if(v===NEW){
+    var t=$('#f-newtype').value;
+    it=t==='filament'?{id:uid(),type:'filament',name:nm,unit:'g',qty:0,thr:200,tare:state.settings.tare,opened:null,pack:1000,recipes:{}}
+                     :{id:uid(),type:'hardware',name:nm,cat:'Other',unit:'pcs',qty:0,thr:20,pack:Math.round(q),recipes:{}};
+    state.items.push(it);
+  }
+  it.qty=Math.round((it.qty+q)*100)/100;
+  state.purchases.push({id:uid(),item:it.id,supplier:sup,qty:q,rm:r,days:d,date:today()});
+  var key=norm(sup);
+  if($('#f-bad').checked)state.bad[key]=true;
+  if(it.type==='filament'){
+    var nz=$('#r-nozzle').value,bd=$('#r-bed').value,fl=$('#r-flow').value,dr=$('#r-dry').value.trim();
+    if(nz!==''||bd!==''||fl!==''||dr!==''){
+      var old=it.recipes[key]||{};
+      it.recipes[key]={nozzle:nz!==''?+nz:(old.nozzle||'-'),bed:bd!==''?+bd:(old.bed||'-'),flow:fl!==''?+fl:(old.flow||'-'),dry:dr||old.dry||'',name:sup,saved:today()};
+    }
+  }
+  save();
+  var unitTxt=it.type==='filament'?rm(r/(q/1000))+'/kg':unitRm(r/q)+'/unit';
+  toast('Saved: +'+q+(it.type==='filament'?' g':' pcs')+' '+it.name+' ('+unitTxt+')');
+  $('#logger').reset();
+  $('#f-item').value=it.id;
+  renderAll();
+  $('#f-item').value=it.id;onItemChange(false);
+}
+
+/* ---------- actions ---------- */
+var resetArm=false,resetT;
+function act(btn){
+  var a=btn.getAttribute('data-act'),id=btn.getAttribute('data-id'),it=id&&item(id),card=btn.closest('.card');
+  if(a==='scale-save'){
+    var inp=$('[data-scale="'+id+'"]'),val=parseFloat(inp.value);
+    if(isNaN(val)){toast('Enter the scale reading first.');return}
+    var net=val-it.tare;
+    if(net<0){toast('Reading is below the empty spool weight ('+it.tare+' g).');return}
+    it.qty=Math.round(net*10)/10;save();renderAll();toast(it.name+': net '+it.qty+' g saved');
+  }else if(a==='adj'){
+    it.qty=Math.max(0,it.qty+parseInt(btn.getAttribute('data-d'),10));save();renderAll();
+  }else if(a==='count-save'){
+    var c=parseInt($('[data-count="'+id+'"]').value,10);
+    if(isNaN(c)||c<0){toast('Enter a count of 0 or more.');return}
+    it.qty=c;save();renderAll();toast(it.name+': '+c+' pcs');
+  }else if(a==='open-today'){
+    it.opened=today();save();renderAll();toast('Opened date set to today');
+  }else if(a==='edit-save'){
+    var g=function(k){var e=$('[data-edit="'+k+'"]',card);return e?e.value:null};
+    var nm=g('name');if(nm!==null&&nm.trim())it.name=nm.trim();
+    var th=g('thr');if(th!==null&&th!==''&&+th>=0)it.thr=+th;
+    if(it.type==='filament'){
+      var ta=g('tare');if(ta!==null&&ta!==''&&+ta>=0)it.tare=+ta;
+      var op=g('opened');it.opened=op||null;
+    }
+    save();renderAll();toast('Changes saved');
+  }else if(a==='restock'){
+    showTab('purchases');renderItemSelect();$('#f-item').value=id;$('#f-qty').value='';onItemChange(false);
+    $('#logger').scrollIntoView({behavior:'smooth',block:'start'});$('#f-supplier').focus();
+  }else if(a==='flag'){
+    var k=btn.getAttribute('data-key');if(state.bad[k])delete state.bad[k];else state.bad[k]=true;
+    save();renderAll();
+  }else if(a==='save-settings'){
+    var am=parseInt($('#set-amber').value,10),rd=parseInt($('#set-red').value,10),ta2=parseInt($('#set-tare').value,10);
+    if(!(am>0)||!(rd>am)||!(ta2>=0)){toast('Red days must be more than amber days; tare 0 or more.');return}
+    state.settings={amber:am,red:rd,tare:ta2};save();renderAll();toast('Settings saved');
+  }else if(a==='reset'){
+    if(!resetArm){resetArm=true;btn.textContent='Tap again to confirm reset';clearTimeout(resetT);resetT=setTimeout(function(){resetArm=false;btn.textContent='Reset Demo Data'},4000);return}
+    resetArm=false;btn.textContent='Reset Demo Data';
+    state=seed();save();$('#logger').reset();renderAll();toast('Demo data restored');
+  }
+}
+document.addEventListener('click',function(e){
+  var t=e.target.closest('[data-tab]');if(t){showTab(t.getAttribute('data-tab'));return}
+  var b=e.target.closest('[data-act]');if(b)act(b);
+});
+document.addEventListener('input',function(e){
+  var t=e.target;
+  if(t.hasAttribute&&t.hasAttribute('data-scale')){
+    var it=item(t.getAttribute('data-scale')),out=$('[data-scale-out="'+it.id+'"]'),v=parseFloat(t.value);
+    if(isNaN(v)){out.textContent='Empty spool tare: '+it.tare+' g — enter a reading to see net grams.';return}
+    var net=v-it.tare;
+    out.textContent=net<0?'Below tare ('+it.tare+' g) — check the reading.':v+' g − '+it.tare+' g tare = '+(Math.round(net*10)/10)+' g net filament';
+  }
+  if(t.id==='f-qty'||t.id==='f-rm')updateCalc();
+  if(t.id==='f-supplier')updateRecipeHint();
+});
+$('#f-item').addEventListener('change',function(){$('#f-qty').value='';onItemChange(false)});
+$('#f-newtype').addEventListener('change',function(){$('#f-qty').value='';onItemChange(false)});
+$('#logger').addEventListener('submit',submitPurchase);
+
+state=load()||seed();
+save();
+renderAll();
+})();
+</script>
+</body>
+</html>
