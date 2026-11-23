@@ -126,6 +126,18 @@ body.cards-open{overflow:hidden}
   body.cards-open #card-sheet{display:grid;grid-template-columns:repeat(2,92mm);gap:5mm;justify-content:start}
   .qcard{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
+.fields.three{grid-template-columns:1fr}
+@media(min-width:620px){.fields.three{grid-template-columns:1fr 1fr}.fields.three .span{grid-column:1/-1}}
+@media(min-width:900px){.fields.three{grid-template-columns:2fr 1fr 1fr}.fields.three .span{grid-column:auto}}
+.risk{border-left:6px solid;border-radius:10px;padding:10px 12px;margin-bottom:12px}
+.risk b{display:block;font-size:.76rem;text-transform:uppercase;letter-spacing:.6px}
+.risk .big{font-size:1.05rem;font-weight:700;margin:2px 0}
+.r-red{background:var(--red-bg);border-color:var(--red);color:#8e1b21}
+.r-amber{background:var(--amber-bg);border-color:var(--amber);color:#7a4600}
+pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem;background:#f4f6f8;border:1px solid var(--line);border-radius:8px;padding:8px 10px;margin:6px 0 0}
+.advice li{margin-bottom:10px}
+.advice .hint{font-size:.8rem;color:var(--muted);margin:2px 0 4px}
+#data-tools{justify-content:flex-end}
 </style>
 </head>
 <body>
@@ -225,14 +237,15 @@ body.cards-open{overflow:hidden}
       <h2>Pre-Job BOM Check</h2>
       <p class="muted" style="margin:0 0 8px">Check stock <b>before</b> promising a delivery date. Pick a preset or build your own kit.</p>
       <div class="row" id="job-presets">
-        <button class="btn sm" data-act="job-preset" data-p="p1">Automotive PETG Sensor Mount Kit</button>
-        <button class="btn sm" data-act="job-preset" data-p="p2">Custom Desk Organizer Assembly</button>
-        <button class="btn sm" data-act="job-preset" data-p="p3">Urgent Multi-Part Enclosure</button>
+        <button class="btn sm" data-act="job-preset" data-p="p1">Industrial Assembly Alignment Jig (PLA + M4 Hardware)</button>
+        <button class="btn sm" data-act="job-preset" data-p="p2">Reverse-Engineered Automotive Sensor Mount (PETG + M3 Inserts)</button>
+        <button class="btn sm" data-act="job-preset" data-p="p3">Urgent Rapid Prototype Enclosure (PETG + Full Fastener Kit)</button>
         <button class="btn sm danger" data-act="job-clear">Clear</button>
       </div>
-      <div class="fields two" style="margin-top:12px">
-        <div><label for="job-name">Job name (optional)</label><input id="job-name" placeholder="e.g. Customer bracket order"></div>
+      <div class="fields three" style="margin-top:12px">
+        <div class="span"><label for="job-name">Job name (optional)</label><input id="job-name" placeholder="e.g. Customer bracket order"></div>
         <div><label for="job-days">Promised Turnaround (days, optional)</label><input id="job-days" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 3"></div>
+        <div><label for="job-value">Quoted Job Value (RM, optional)</label><input id="job-value" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 1200"></div>
       </div>
       <div id="job-lines" style="margin-top:10px"></div>
       <div class="addline">
@@ -247,7 +260,13 @@ body.cards-open{overflow:hidden}
 
 <footer>
   <span class="muted">Stinablis ShopGuard · data is saved in this browser only</span>
-  <button class="btn danger sm" data-act="reset" id="reset-btn">Reset Demo Data</button>
+  <div class="row" id="data-tools">
+    <button class="btn sm" data-act="export" id="export-btn">Export Backup (.json)</button>
+    <button class="btn sm" data-act="import" id="import-btn">Import Backup</button>
+    <input type="file" id="import-file" accept=".json,application/json" class="hidden" aria-label="Choose a backup file">
+    <button class="btn danger sm" data-act="reset" id="reset-btn">Reset Demo Data</button>
+  </div>
+  <div class="muted" style="width:100%;font-size:.78rem">Backup includes inventory, supplier memory, verified slicer recipes and the current job. Import replaces the data on this device.</div>
 </footer>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="card-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cm-title">
@@ -275,7 +294,7 @@ function ago(n){var d=new Date();d.setDate(d.getDate()-n);return isoOf(d)}
 function daysSince(s){var a=s.split('-'),t=new Date();var d0=new Date(+a[0],+a[1]-1,+a[2]);var d1=new Date(t.getFullYear(),t.getMonth(),t.getDate());return Math.round((d1-d0)/864e5)}
 function norm(s){return String(s).trim().toLowerCase()}
 function unitRm(v){return 'RM '+v.toFixed(v>=0.1?2:3)}
-function rm(n){return 'RM '+(Math.round(n*100)/100).toFixed(2)}
+function rm(n){return 'RM '+(Math.round(n*100)/100).toFixed(2).replace(/\B(?=(\d{3})+(?!\d))/g,',')}
 function uid(){return 'u'+Date.now().toString(36)+Math.random().toString(36).slice(2,6)}
 
 /* ---------- state & persistence ---------- */
@@ -315,7 +334,7 @@ function seed(){
   function p(item,sup,qty,rmv,days,d){S.purchases.push({id:uid()+S.purchases.length,item:item,supplier:sup,qty:qty,rm:rmv,days:days,date:ago(d)})}
   p('f1',FH,1000,42,9,34); p('f1',FH,1000,41,8,6);
   p('f2',FH,1000,39,11,45); p('f2',KS,1000,72,1,15);
-  p('f3',FH,1000,48,10,52); p('f3',BF,1000,38,12,50);
+  p('f3',FH,1000,48,10,52); p('f3',BF,1000,38,12,50); p('f3',KS,1000,85,1,18);
   p('f4',KS,1000,79,1,10); p('f4',KS,1000,82,2,3);
   p('f5',KS,1000,89,1,20);
   p('f6',FH,1000,45,7,4);
@@ -567,11 +586,11 @@ function submitPurchase(e){
 /* ---------- Piece 2: pre-job BOM check ---------- */
 var MARGIN_PCT=115; /* 15% reprint safety margin on filament */
 var PRESETS=[
-  {id:'p1',name:'Automotive PETG Sensor Mount Kit',days:7,lines:[['f4',180],['h2',8],['h7',8],['h5',8],['h4',4]]},
-  {id:'p2',name:'Custom Desk Organizer Assembly',days:14,lines:[['f2',300],['h1',12],['h3',6],['h6',6],['h11',20]]},
-  {id:'p3',name:'Urgent Multi-Part Enclosure',days:2,lines:[['f3',500],['f5',120],['h2',40],['h7',12],['h9',4]]}
+  {id:'p1',name:'Industrial Assembly Alignment Jig (PLA + M4 Hardware)',days:7,value:880,lines:[['f1',250],['h3',12],['h6',12],['h4',6],['h8',8]]},
+  {id:'p2',name:'Reverse-Engineered Automotive Sensor Mount (PETG + M3 Inserts)',days:14,value:1350,lines:[['f3',540],['h7',16],['h1',16]]},
+  {id:'p3',name:'Urgent Rapid Prototype Enclosure (PETG + Full Fastener Kit)',days:2,value:1200,lines:[['f4',350],['h2',40],['h1',20],['h5',40],['h7',16],['h3',8]]}
 ];
-function defaultJob(){return {name:'',days:null,lines:[]}}
+function defaultJob(){return {name:'',days:null,value:null,lines:[]}}
 function tot(it,unit,qty){return it.type==='filament'?unit*qty/1000:unit*qty}
 function chOf(sup){return supStats(norm(sup)).avg<=2?'local':'west'}
 function channelStats(){
@@ -624,8 +643,40 @@ function shortText(r){
   }
   return 'Short '+r.lack+'× '+it.name+' — blocks whole job (need '+r.need+', have '+r.have+')';
 }
-function adviceHtml(r){
-  var P=state.job.days,ch=channelStats(),w=ch.west,l=ch.local,L=[];
+function chooseChannel(P,ch){
+  var wMax=ch.west?ch.west.max:12;
+  if(P==null)return 'west';
+  return (P-1)>=wMax?'west':'local';
+}
+function cleanSup(n){
+  if(/https?:|www\./i.test(n))return '';
+  return String(n).replace(/\s*\([^)]*\)\s*/g,' ').replace(/^\s*(shopee|lazada)\s*-\s*/i,'').replace(/\s+/g,' ').trim();
+}
+var WD=['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],MO=['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+function fmtDate(d){return WD[d.getDay()]+' '+d.getDate()+' '+MO[d.getMonth()]}
+/* Supplier-facing text only: item, pack quantity, target delivery. No prices, job value or internal notes. */
+function restockMsg(it,buy,src,choice,P,ch){
+  var nm=src?cleanSup(src.sup):'',pk=it.pack||1,qty,win;
+  if(it.type==='filament')qty=(buy%1000===0)?(buy/1000)+' × 1 kg spool'+(buy>1000?'s':'')+' ('+buy+' g)':buy+' g';
+  else qty=buy+' pcs'+(buy===pk?' (1 pack)':'');
+  if(P==null){win=choice==='local'?'as soon as possible':'no rush — within '+(ch.west?(ch.west.min===ch.west.max?ch.west.min:ch.west.min+'–'+ch.west.max):'7–12')+' days is fine'}
+  else{var n=Math.max(1,P-1),d=new Date();d.setDate(d.getDate()+n);win='within '+n+' day'+(n===1?'':'s')+' (by '+fmtDate(d)+')'}
+  return 'Hi'+(nm?' '+nm:'')+', this is Stinablis (3D printing & prototyping, Kuching).\nCould I order:\n• '+qty+' '+it.name+'\nTarget delivery: '+win+'.\nPlease confirm stock, total price and the earliest delivery or pickup. Thank you!';
+}
+function plan(r){
+  var P=state.job.days,ch=channelStats(),choice=chooseChannel(P,ch),items=[],cw=0,cl=0,miss=0;
+  r.shorts.forEach(function(x){
+    var it=x.it,pk=it.pack||1,buy=Math.ceil(x.lack/pk)*pk,pw=channelPrice(it,'west'),pl=channelPrice(it,'local');
+    var uw=pw||pl,ul=pl||pw,tw=uw?tot(it,uw.unit,buy):null,tl=ul?tot(it,ul.unit,buy):null;
+    if(tw!=null)cw+=tw;if(tl!=null)cl+=tl;
+    var src=choice==='west'?(pw||pl):(pl||pw),srcCh=src?(src===pw?'west':'local'):null,st=itemStats(it);
+    if(st)miss+=tot(it,unitPrice(st.last),x.lack);
+    items.push({it:it,buy:buy,pw:pw,pl:pl,tw:tw,tl:tl,src:src,srcCh:srcCh,msg:restockMsg(it,buy,src,choice,P,ch)});
+  });
+  return {P:P,ch:ch,choice:choice,items:items,cw:cw,cl:cl,miss:miss,chosen:choice==='west'?cw:cl};
+}
+function adviceHtml(r,pn){
+  var P=pn.P,ch=pn.ch,w=ch.west,l=ch.local,L=[];
   function rng(o,fb){return o?(o.min===o.max?''+o.min:o.min+'–'+o.max):fb}
   var wr=rng(w,'7–12'),lr=rng(l,'1–2');
   if(!r.shorts.length){
@@ -633,15 +684,7 @@ function adviceHtml(r){
     if(r.heads.length)L.push('<p>Restock soon (no rush, cheap West MY is fine): '+r.heads.map(function(x){return esc(x.it.name)}).join(', ')+' will be at or below the reorder floor after this job.</p>');
     return L.join('');
   }
-  var cw=0,cl=0,det=[];
-  r.shorts.forEach(function(x){
-    var it=x.it,pk=it.pack||1,buy=Math.ceil(x.lack/pk)*pk,pw=channelPrice(it,'west'),pl=channelPrice(it,'local');
-    var uw=pw||pl,ul=pl||pw,tw=uw?tot(it,uw.unit,buy):null,tl=ul?tot(it,ul.unit,buy):null;
-    if(tw!=null)cw+=tw;if(tl!=null)cl+=tl;
-    function opt(p,t,tag){return p?tag+' ≈ '+rm(t)+' ('+esc(p.sup)+', ~'+Math.round(p.eta)+' d)':tag+': no history'}
-    det.push('<li><b>'+esc(it.name)+'</b>: buy '+buy+(it.type==='filament'?' g':' pcs')+' — '+opt(pw,tw,'West MY')+' · '+opt(pl,tl,'Local')+'</li>');
-  });
-  var wMin=w?w.min:7,wMax=w?w.max:12,lMin=l?l.min:1,save=cl-cw;
+  var cw=pn.cw,cl=pn.cl,wMin=w?w.min:7,wMax=w?w.max:12,lMin=l?l.min:1,save=cl-cw;
   if(P==null){
     L.push('<p><b>Add a Promised Turnaround for a firm call.</b> Cheap West MY restock arrives in '+wr+' days (≈ '+rm(cw)+'); Local Kuching backup in '+lr+' days (≈ '+rm(cl)+').</p>');
   }else{
@@ -651,16 +694,33 @@ function adviceHtml(r){
     else if(win>=lMin)L.push('<p><b class="pill-local">Use Local Kuching Backup.</b> West MY takes '+wr+' days — too slow for a '+P+'-day promise'+tail+'. Local Kuching takes '+lr+' days (≈ '+rm(cl)+').</p>');
     else L.push('<p><b class="pill-local">Even local Kuching is tight for a '+P+'-day promise.</b> Buy the blocking parts locally today (≈ '+rm(cl)+') and confirm the date only after pickup.</p>');
   }
-  L.push('<ul>'+det.join('')+'</ul>');
+  function opt(p,t,tag){return p?tag+' ≈ '+rm(t)+' ('+esc(p.sup)+', ~'+Math.round(p.eta)+' d)':tag+': no history'}
+  L.push('<ul>'+pn.items.map(function(x){
+    var it=x.it,hint;
+    if(!x.src)hint='No supplier logged for this item yet, so the message is generic.';
+    else{
+      var pr=it.type==='filament'?rm(x.src.unit)+'/kg':unitRm(x.src.unit)+'/unit';
+      hint='Internal only (not in the message): last logged '+(x.srcCh==='local'?'local':'West MY')+' source '+esc(x.src.sup)+' at '+pr+'.'+(x.srcCh!==pn.choice?' No '+(pn.choice==='local'?'local Kuching':'West MY')+' supplier logged for this item.':'');
+    }
+    return '<li><b>'+esc(it.name)+'</b>: buy '+x.buy+(it.type==='filament'?' g':' pcs')+' — '+opt(x.pw,x.tw,'West MY')+' · '+opt(x.pl,x.tl,'Local')+
+      '<div class="hint">'+hint+'</div>'+
+      '<div class="row"><button class="btn sm primary" data-act="copy-restock">Copy Restock Message</button></div>'+
+      '<details><summary>Preview message</summary><pre class="msg">'+esc(x.msg)+'</pre></details></li>'}).join('')+'</ul>');
   return L.join('');
 }
 function renderJobResult(){
   var el=$('#job-result'),r=jobCheck();
   if(!r.rows.length){el.innerHTML='<div class="panel muted">Add filament grams and hardware parts (or tap a preset) to check stock before you promise a date.</div>';return}
+  var pn=plan(r);
   var V={green:['GREEN — Ready to promise','All filament (including a 15% reprint safety margin) and every part is in stock.'],
          amber:['AMBER — Small gap, top up first','A minor shortage. Cover it before you promise a date.'],
          red:['RED — Do not promise a date yet','Stock is short. Cover the shortage before promising a delivery date.']}[r.level];
   var h='<div class="verdict v-'+r.level+'" role="status"><div class="lights" aria-hidden="true"><i></i><i></i><i></i></div><div><b>'+V[0]+'</b>'+V[1]+'</div></div>';
+  if(r.shorts.length){
+    var vt=parseFloat(state.job.value),miss=pn.miss>0?rm(pn.miss)+' in missing parts':'Missing parts';
+    h+='<div class="risk r-'+r.level+'"><b>Job Value at Risk</b><div class="big">'+miss+(vt>0?' is stalling a '+rm(vt)+' custom job.':' is stalling this custom job.')+'</div>'+
+      '<div>'+(pn.chosen>0?'Covering it costs about <b style="display:inline;font-size:inherit;text-transform:none;letter-spacing:0">'+rm(pn.chosen)+'</b> ('+(pn.choice==='local'?'local Kuching top-up':'West MY top-up')+'). ':'')+(vt>0?'':'Add a Quoted Job Value above to see what is at stake.')+'</div></div>';
+  }
   h+='<div class="panel">';
   if(r.shorts.length)h+='<h2>Shortage list</h2><ul class="short-list">'+r.shorts.map(function(x){return '<li class="s-'+x.sev+'">'+esc(shortText(x))+'</li>'}).join('')+'</ul>';
   if(r.heads.length)h+='<p class="muted"><b>Heads-up:</b> '+r.heads.map(function(x){return esc(x.it.name)+' → '+(Math.round(x.left*10)/10)+(x.it.type==='filament'?' g':'')+' left (floor '+x.it.thr+')'}).join('; ')+'.</p>';
@@ -669,12 +729,81 @@ function renderJobResult(){
       return '<tr><td>'+esc(x.it.name)+'</td><td>'+x.need+u+' / '+x.have+u+'</td><td class="'+(x.sev?'st-'+x.sev:'st-ok')+'">'+(x.sev?'SHORT '+x.lack+u:'OK')+'</td><td>'+(x.cost==null?'no price':rm(x.cost))+'</td></tr>'}).join('')+
     '</tbody></table></div>';
   h+='<p style="margin:10px 0 0"><b>Estimated material + hardware cost: '+rm(r.cost)+'</b><span class="muted"> at last logged supplier prices'+(r.costM>r.cost?' ('+rm(r.costM)+' if the 15% reprint margin is used)':'')+(r.unpriced?'; '+r.unpriced+' item(s) have no logged price':'')+'.</span></p></div>';
-  h+='<div class="panel advice"><h2>Smart Kuching Reorder Advice</h2>'+adviceHtml(r)+'</div>';
+  h+='<div class="panel advice"><h2>Smart Kuching Reorder Advice</h2>'+adviceHtml(r,pn)+'</div>';
   el.innerHTML=h;
+}
+/* ---------- Piece 3: JSON backup / restore ---------- */
+function num(v,d){v=+v;return isFinite(v)?v:d}
+function str(v,m){return String(v==null?'':v).slice(0,m||200)}
+function safeKey(k){return k!=='__proto__'&&k!=='constructor'&&k!=='prototype'}
+function rv(v){return typeof v==='number'&&isFinite(v)?v:str(v,12)}
+var DATE_RE=/^\d{4}-\d{2}-\d{2}$/;
+function cleanState(d){
+  if(!d||typeof d!=='object'||!Array.isArray(d.items)||!Array.isArray(d.purchases)||!d.settings||typeof d.settings!=='object')return null;
+  var am=Math.max(1,Math.round(num(d.settings.amber,14))),rd=Math.max(1,Math.round(num(d.settings.red,30)));
+  if(rd<=am){am=14;rd=30}
+  var S={settings:{amber:am,red:rd,tare:Math.max(0,num(d.settings.tare,250))},bad:{},items:[],purchases:[],job:defaultJob()},ids={};
+  d.items.slice(0,2000).forEach(function(i){
+    if(!i||typeof i!=='object'||(i.type!=='filament'&&i.type!=='hardware')||!i.id)return;
+    var id=str(i.id,40);if(!safeKey(id)||ids[id])return;
+    var fil=i.type==='filament',it={id:id,type:i.type,name:str(i.name,120)||'Unnamed item',unit:fil?'g':'pcs',qty:Math.max(0,num(i.qty,0)),thr:Math.max(0,num(i.thr,0)),pack:Math.max(1,num(i.pack,fil?1000:50)),recipes:{}};
+    if(fil){it.tare=Math.max(0,num(i.tare,250));it.opened=(typeof i.opened==='string'&&DATE_RE.test(i.opened))?i.opened:null}
+    else it.cat=str(i.cat,40)||'Other';
+    if(i.recipes&&typeof i.recipes==='object')Object.keys(i.recipes).forEach(function(k){
+      var x=i.recipes[k];if(!safeKey(k)||!x||typeof x!=='object')return;
+      it.recipes[str(k,150)]={nozzle:rv(x.nozzle),bed:rv(x.bed),flow:rv(x.flow),dry:str(x.dry,200),name:str(x.name,150),saved:str(x.saved,10)};
+    });
+    ids[id]=1;S.items.push(it);
+  });
+  d.purchases.slice(0,20000).forEach(function(p){
+    if(!p||typeof p!=='object'||!ids[p.item]||!str(p.supplier,150).trim())return;
+    var q=num(p.qty,0),r=num(p.rm,-1),dy=num(p.days,-1);
+    if(!(q>0)||r<0||dy<0||typeof p.date!=='string'||!DATE_RE.test(p.date))return;
+    S.purchases.push({id:str(p.id,40)||uid(),item:p.item,supplier:str(p.supplier,150),qty:q,rm:r,days:Math.round(dy),date:p.date});
+  });
+  if(d.bad&&typeof d.bad==='object')Object.keys(d.bad).forEach(function(k){if(safeKey(k)&&d.bad[k])S.bad[str(k,150)]=true});
+  if(d.job&&typeof d.job==='object'){
+    var j=d.job,dy2=(j.days===null||j.days===undefined||j.days==='')?null:Math.max(0,Math.round(num(j.days,0))),v=(j.value===null||j.value===undefined||j.value==='')?null:Math.max(0,num(j.value,0));
+    S.job={name:str(j.name,120),days:dy2,value:v,lines:(Array.isArray(j.lines)?j.lines:[]).slice(0,200).filter(function(l){return l&&ids[l.item]&&num(l.qty,0)>0}).map(function(l){return {item:l.item,qty:num(l.qty,0)}})};
+  }
+  return S;
+}
+function exportBackup(){
+  var payload={app:'stinablis-shopguard',version:1,exportedAt:new Date().toISOString(),data:state};
+  var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
+  a.href=url;a.download='stinablis-shopguard-backup-'+today()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);
+  setTimeout(function(){URL.revokeObjectURL(url)},1500);
+  toast('Backup exported: '+state.items.length+' items, '+state.purchases.length+' purchases');
+}
+function importBackup(file){
+  if(!file)return;
+  if(file.size>5e6){toast('Import failed: file is too large');return}
+  var rd=new FileReader();
+  rd.onerror=function(){toast('Import failed: could not read the file')};
+  rd.onload=function(){
+    var data,S;
+    try{data=JSON.parse(rd.result)}catch(e){toast('Import failed: not valid JSON');return}
+    S=(data&&data.app==='stinablis-shopguard')?cleanState(data.data):null;
+    if(!S){toast('Import failed: not a Stinablis ShopGuard backup');return}
+    state=S;save();$('#logger').reset();renderAll();
+    toast('Imported '+S.items.length+' items, '+S.purchases.length+' purchases');
+  };
+  rd.readAsText(file);
+}
+function copyText(text,cb){
+  function fallback(){
+    var ta=document.createElement('textarea'),ok=false;
+    ta.value=text;ta.setAttribute('readonly','');ta.style.cssText='position:fixed;left:-9999px;top:0';
+    document.body.appendChild(ta);ta.select();
+    try{ok=document.execCommand('copy')}catch(e){}
+    document.body.removeChild(ta);cb(ok);
+  }
+  if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(text).then(function(){cb(true)},fallback)}else fallback();
 }
 function renderJob(){
   var J=state.job;
   if(document.activeElement!==$('#job-name'))$('#job-name').value=J.name||'';
+  if(document.activeElement!==$('#job-value'))$('#job-value').value=J.value==null?'':J.value;
   if(document.activeElement!==$('#job-days'))$('#job-days').value=J.days==null?'':J.days;
   $('#job-lines').innerHTML=J.lines.map(function(l,i){
     var it=item(l.item);if(!it)return '';
@@ -793,7 +922,7 @@ function act(btn){
     closeCards();
   }else if(a==='job-preset'){
     var pr=PRESETS.filter(function(x){return x.id===btn.getAttribute('data-p')})[0];
-    state.job={name:pr.name,days:pr.days,lines:pr.lines.filter(function(l){return item(l[0])}).map(function(l){return {item:l[0],qty:l[1]}})};
+    state.job={name:pr.name,days:pr.days,value:pr.value,lines:pr.lines.filter(function(l){return item(l[0])}).map(function(l){return {item:l[0],qty:l[1]}})};
     save();renderJob();toast('Loaded: '+pr.name);
   }else if(a==='job-clear'){
     state.job=defaultJob();save();renderJob();
@@ -805,6 +934,16 @@ function act(btn){
     save();renderJob();
   }else if(a==='job-remove'){
     state.job.lines.splice(parseInt(btn.getAttribute('data-i'),10),1);save();renderJob();
+  }else if(a==='export'){
+    exportBackup();
+  }else if(a==='import'){
+    $('#import-file').click();
+  }else if(a==='copy-restock'){
+    var li=btn.closest('li'),pre=li.querySelector('pre.msg');
+    copyText(pre.textContent,function(ok){
+      if(ok)toast('Restock message copied — paste it into WhatsApp');
+      else{li.querySelector('details').open=true;toast('Copy blocked — select the message below and copy it')}
+    });
   }else if(a==='reset'){
     if(!resetArm){resetArm=true;btn.textContent='Tap again to confirm reset';clearTimeout(resetT);resetT=setTimeout(function(){resetArm=false;btn.textContent='Reset Demo Data'},4000);return}
     resetArm=false;btn.textContent='Reset Demo Data';
@@ -826,10 +965,12 @@ document.addEventListener('input',function(e){
   }
   if(t.hasAttribute&&t.hasAttribute('data-jqty')){var ln=state.job.lines[parseInt(t.getAttribute('data-jqty'),10)];if(ln){ln.qty=t.value;save();renderJobResult()}}
   if(t.id==='job-days'){state.job.days=t.value===''?null:Math.max(0,parseInt(t.value,10)||0);save();renderJobResult()}
+  if(t.id==='job-value'){state.job.value=t.value===''?null:Math.max(0,parseFloat(t.value)||0);save();renderJobResult()}
   if(t.id==='job-name'){state.job.name=t.value;save()}
   if(t.id==='f-qty'||t.id==='f-rm')updateCalc();
   if(t.id==='f-supplier')updateRecipeHint();
 });
+$('#import-file').addEventListener('change',function(e){var f=e.target.files&&e.target.files[0];importBackup(f);e.target.value=''});
 $('#job-add-item').addEventListener('change',function(){$('#job-add-qty').value='';onJobAddChange(false)});
 document.addEventListener('keydown',function(e){if(e.key==='Escape')closeCards()});
 $('#f-item').addEventListener('change',function(){$('#f-qty').value='';onItemChange(false)});
@@ -838,6 +979,7 @@ $('#logger').addEventListener('submit',submitPurchase);
 
 state=load()||seed();
 if(!state.job)state.job=defaultJob();
+if(state.job.value===undefined)state.job.value=null;
 save();
 renderAll();
 })();
