@@ -138,6 +138,7 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
 .advice li{margin-bottom:10px}
 .advice .hint{font-size:.8rem;color:var(--muted);margin:2px 0 4px}
 #data-tools{justify-content:flex-end}
+.panel h3.sub{margin:-4px 0 8px;font-size:.95rem;color:var(--brand)}
 </style>
 </head>
 <body>
@@ -149,22 +150,22 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
       <button role="tab" data-tab="filament" id="tab-filament">Filament</button>
       <button role="tab" data-tab="hardware" id="tab-hardware">Hardware</button>
       <button role="tab" data-tab="purchases" id="tab-purchases">Purchases</button>
-      <button role="tab" data-tab="job" id="tab-job">Job Check</button>
+      <button role="tab" data-tab="job" id="tab-job">Parts Check</button>
     </nav>
   </div>
 </header>
 
 <main class="wrap">
   <div class="stats" id="stats"></div>
-  <div class="toolbar"><button class="btn sm" data-act="print-low" id="print-low-btn">Print All Low-Stock Cards</button></div>
+  <div class="toolbar"><button class="btn sm" data-act="print-low" id="print-low-btn">Print All Low-Stock Labels</button></div>
 
   <section id="view-filament" role="tabpanel" aria-labelledby="tab-filament">
     <details class="panel" id="settings">
-      <summary>Settings: humidity warning days &amp; default spool tare</summary>
+      <summary>Settings: damp-air warning days &amp; default empty spool weight</summary>
       <div class="fields four" style="margin-top:8px">
-        <div><label for="set-amber">Amber after (days open)</label><input id="set-amber" type="number" min="1" inputmode="numeric"></div>
-        <div><label for="set-red">Red after (days open)</label><input id="set-red" type="number" min="1" inputmode="numeric"></div>
-        <div><label for="set-tare">Default empty spool (g)</label><input id="set-tare" type="number" min="0" inputmode="numeric"></div>
+        <div><label for="set-amber">Orange warning after (days open)</label><input id="set-amber" type="number" min="1" inputmode="numeric"></div>
+        <div><label for="set-red">Red warning after (days open)</label><input id="set-red" type="number" min="1" inputmode="numeric"></div>
+        <div><label for="set-tare">Default Empty Spool Weight (g)</label><input id="set-tare" type="number" min="0" inputmode="numeric"></div>
         <div style="align-self:end"><button class="btn primary" data-act="save-settings">Save settings</button></div>
       </div>
     </details>
@@ -177,7 +178,7 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
 
   <section id="view-purchases" role="tabpanel" aria-labelledby="tab-purchases" class="hidden">
     <form class="panel" id="logger" novalidate>
-      <h2>Log a restock (15 seconds)</h2>
+      <h2>Quick Restock Log</h2>
       <div class="fields two">
         <div>
           <label for="f-item">Item</label>
@@ -208,11 +209,11 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
       </div>
 
       <details id="recipe-box" class="hidden" style="margin-top:8px">
-        <summary>Optional: Verified Slicer Recipe for this filament</summary>
+        <summary>Optional: Saved Printer Settings for this filament</summary>
         <div class="fields four" style="margin-top:6px">
-          <div><label for="r-nozzle">Nozzle °C</label><input id="r-nozzle" type="number" min="150" max="350" inputmode="numeric"></div>
-          <div><label for="r-bed">Bed °C</label><input id="r-bed" type="number" min="0" max="130" inputmode="numeric"></div>
-          <div><label for="r-flow">Flow Ratio</label><input id="r-flow" type="number" min="0.5" max="1.5" step="0.01" inputmode="decimal" placeholder="0.98"></div>
+          <div><label for="r-nozzle">Nozzle Temperature (°C)</label><input id="r-nozzle" type="number" min="150" max="350" inputmode="numeric"></div>
+          <div><label for="r-bed">Bed Temperature (°C)</label><input id="r-bed" type="number" min="0" max="130" inputmode="numeric"></div>
+          <div><label for="r-flow">Flow Rate (1.00 = normal)</label><input id="r-flow" type="number" min="0.5" max="1.5" step="0.01" inputmode="decimal" placeholder="0.98"></div>
           <div><label for="r-dry">Drying Note</label><input id="r-dry" placeholder="e.g. 50 °C for 4 h"></div>
         </div>
         <div class="muted" id="recipe-hint" style="margin-top:4px"></div>
@@ -224,7 +225,7 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
 
     <div class="panel">
       <h2>Suppliers</h2>
-      <div class="tscroll"><table><thead><tr><th>Supplier</th><th>Reliability</th><th>Orders</th><th>Avg days</th><th></th></tr></thead><tbody id="sup-body"></tbody></table></div>
+      <div class="tscroll"><table><thead><tr><th>Supplier</th><th>Reliability</th><th>Orders</th><th>Average days</th><th></th></tr></thead><tbody id="sup-body"></tbody></table></div>
     </div>
 
     <div class="panel">
@@ -234,18 +235,19 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
   </section>
   <section id="view-job" role="tabpanel" aria-labelledby="tab-job" class="hidden">
     <div class="panel">
-      <h2>Pre-Job BOM Check</h2>
-      <p class="muted" style="margin:0 0 8px">Check stock <b>before</b> promising a delivery date. Pick a preset or build your own kit.</p>
+      <h2>Parts Check</h2>
+      <h3 class="sub">Before-You-Promise Parts Check</h3>
+      <p class="muted" style="margin:0 0 8px">Check your stock <b>before</b> you promise a delivery date. Tap a ready-made job below, or build your own list.</p>
       <div class="row" id="job-presets">
-        <button class="btn sm" data-act="job-preset" data-p="p1">Industrial Assembly Alignment Jig (PLA + M4 Hardware)</button>
-        <button class="btn sm" data-act="job-preset" data-p="p2">Reverse-Engineered Automotive Sensor Mount (PETG + M3 Inserts)</button>
-        <button class="btn sm" data-act="job-preset" data-p="p3">Urgent Rapid Prototype Enclosure (PETG + Full Fastener Kit)</button>
+        <button class="btn sm" data-act="job-preset" data-p="p1">Industrial Alignment Jig (PLA + M4 Hardware)</button>
+        <button class="btn sm" data-act="job-preset" data-p="p2">Reverse-Engineered Car Sensor Mount (PETG + M3 Inserts)</button>
+        <button class="btn sm" data-act="job-preset" data-p="p3">Urgent Prototype Electronics Case (PETG + Full Screw Kit)</button>
         <button class="btn sm danger" data-act="job-clear">Clear</button>
       </div>
       <div class="fields three" style="margin-top:12px">
         <div class="span"><label for="job-name">Job name (optional)</label><input id="job-name" placeholder="e.g. Customer bracket order"></div>
-        <div><label for="job-days">Promised Turnaround (days, optional)</label><input id="job-days" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 3"></div>
-        <div><label for="job-value">Quoted Job Value (RM, optional)</label><input id="job-value" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 1200"></div>
+        <div><label for="job-days">Days Promised to Customer (optional)</label><input id="job-days" type="number" min="0" step="1" inputmode="numeric" placeholder="e.g. 3"></div>
+        <div><label for="job-value">Job Value (RM, optional)</label><input id="job-value" type="number" min="0" step="0.01" inputmode="decimal" placeholder="e.g. 1200"></div>
       </div>
       <div id="job-lines" style="margin-top:10px"></div>
       <div class="addline">
@@ -259,21 +261,21 @@ pre.msg{white-space:pre-wrap;word-break:break-word;font:inherit;font-size:.84rem
 </main>
 
 <footer>
-  <span class="muted">Stinablis ShopGuard · data is saved in this browser only</span>
+  <span class="muted">Stinablis ShopGuard · your data is saved on this device only</span>
   <div class="row" id="data-tools">
-    <button class="btn sm" data-act="export" id="export-btn">Export Backup (.json)</button>
-    <button class="btn sm" data-act="import" id="import-btn">Import Backup</button>
+    <button class="btn sm" data-act="export" id="export-btn">Save Backup File</button>
+    <button class="btn sm" data-act="import" id="import-btn">Load Backup File</button>
     <input type="file" id="import-file" accept=".json,application/json" class="hidden" aria-label="Choose a backup file">
     <button class="btn danger sm" data-act="reset" id="reset-btn">Reset Demo Data</button>
   </div>
-  <div class="muted" style="width:100%;font-size:.78rem">Backup includes inventory, supplier memory, verified slicer recipes and the current job. Import replaces the data on this device.</div>
+  <div class="muted" style="width:100%;font-size:.78rem">A backup file holds your inventory, supplier history, saved printer settings and the current job. Loading a file replaces the data on this device.</div>
 </footer>
 <div id="toast" role="status" aria-live="polite"></div>
 <div id="card-modal" class="hidden" role="dialog" aria-modal="true" aria-labelledby="cm-title">
   <div class="cm-box">
     <div class="modal-ui cm-head">
-      <h2 id="cm-title">Bin/Spool Card</h2>
-      <div class="row"><button class="btn primary" data-act="print-now" id="cm-print">Print Card</button><button class="btn" data-act="close-card" id="cm-close">Close</button></div>
+      <h2 id="cm-title">Shelf / Spool Label</h2>
+      <div class="row"><button class="btn primary" data-act="print-now" id="cm-print">Print Label</button><button class="btn" data-act="close-card" id="cm-close">Close</button></div>
     </div>
     <div id="card-sheet"></div>
   </div>
@@ -413,13 +415,13 @@ function renderStats(){
 function supLine(it){
   var st=itemStats(it);
   if(!st)return '<div class="muted">No purchases logged yet.</div>';
-  return '<div class="row"><span class="muted">#1 supplier:</span> <b>'+esc(st.sup)+'</b> '+badgeHtml(st.key)+'</div>'+
-    '<div class="muted">Last paid '+esc(fmtUnitPrice(it,st.last))+' · typical ETA ~'+Math.round(st.eta)+' day'+(Math.round(st.eta)===1?'':'s')+'</div>';
+  return '<div class="row"><span class="muted">Main supplier:</span> <b>'+esc(st.sup)+'</b> '+badgeHtml(st.key)+'</div>'+
+    '<div class="muted">Last paid '+esc(fmtUnitPrice(it,st.last))+' · usual delivery ~'+Math.round(st.eta)+' day'+(Math.round(st.eta)===1?'':'s')+'</div>';
 }
 function recipeHtml(it){
   var ks=Object.keys(it.recipes||{});
-  if(!ks.length)return '<div class="muted">No verified slicer recipe yet. Add one when you log a purchase.</div>';
-  var h='<div class="recipe"><b>Verified Slicer Recipe</b>';
+  if(!ks.length)return '<div class="muted">No saved printer settings yet. Add them when you log a purchase.</div>';
+  var h='<div class="recipe"><b>Saved Printer Settings</b>';
   ks.forEach(function(k){var r=it.recipes[k];
     h+='<div><i>'+esc(r.name)+':</i> Nozzle '+esc(r.nozzle)+' °C · Bed '+esc(r.bed)+' °C · Flow '+esc(r.flow)+(r.dry?' · '+esc(r.dry):'')+'</div>'});
   return h+'</div>';
@@ -429,20 +431,20 @@ function filamentCard(it){
   return '<article class="card'+(low?' low':'')+'" data-id="'+it.id+'">'+
    '<div class="row between"><h3>'+esc(it.name)+'</h3>'+(low?'<span class="badge b-red">'+(it.qty<=0?'OUT':'LOW')+'</span>':'<span class="badge b-green">OK</span>')+'</div>'+
    '<div class="bar'+(low?' low':'')+'" role="img" aria-label="'+it.qty+' grams left"><i style="width:'+pct+'%"></i></div>'+
-   '<div class="row between"><b>'+Math.round(it.qty)+' g net</b><span class="muted">reorder floor '+it.thr+' g</span></div>'+
+   '<div class="row between"><b>'+Math.round(it.qty)+' g left</b><span class="muted">reorder level '+it.thr+' g</span></div>'+
    '<div class="hum '+h.lvl+'">'+esc(h.text)+'</div>'+
    supLine(it)+recipeHtml(it)+
-   '<div class="scale"><label for="sc-'+it.id+'">Scale reading — spool + filament (g)</label>'+
+   '<div class="scale"><label for="sc-'+it.id+'">Scale reading — spool and filament together (g)</label>'+
      '<div class="row"><input id="sc-'+it.id+'" data-scale="'+it.id+'" type="number" inputmode="decimal" min="0" placeholder="e.g. 590" style="flex:1;min-width:110px">'+
-     '<button class="btn primary sm" data-act="scale-save" data-id="'+it.id+'">Update net g</button></div>'+
-     '<div class="muted" data-scale-out="'+it.id+'">Empty spool tare: '+it.tare+' g — enter a reading to see net grams.</div></div>'+
+     '<button class="btn primary sm" data-act="scale-save" data-id="'+it.id+'">Save Weight</button></div>'+
+     '<div class="muted" data-scale-out="'+it.id+'">Empty spool weight: '+it.tare+' g — type a reading to see how much filament is left.</div></div>'+
    '<div class="row"><button class="btn sm" data-act="restock" data-id="'+it.id+'">Restock</button>'+
-     '<button class="btn sm" data-act="card" data-id="'+it.id+'">Bin/Spool Card</button>'+
+     '<button class="btn sm" data-act="card" data-id="'+it.id+'">Shelf / Spool Label</button>'+
      (it.opened?'':'<button class="btn sm" data-act="open-today" data-id="'+it.id+'">Mark opened today</button>')+'</div>'+
    '<details><summary>Edit spool</summary><div class="fields two" style="margin-top:6px">'+
      '<div><label>Name</label><input data-edit="name" value="'+esc(it.name)+'"></div>'+
-     '<div><label>Empty spool tare (g)</label><input data-edit="tare" type="number" min="0" value="'+it.tare+'"></div>'+
-     '<div><label>Reorder floor (g)</label><input data-edit="thr" type="number" min="0" value="'+it.thr+'"></div>'+
+     '<div><label>Empty Spool Weight (g)</label><input data-edit="tare" type="number" min="0" value="'+it.tare+'"></div>'+
+     '<div><label>Reorder level (g)</label><input data-edit="thr" type="number" min="0" value="'+it.thr+'"></div>'+
      '<div><label>Opened date</label><input data-edit="opened" type="date" value="'+esc(it.opened||'')+'"></div>'+
      '</div><div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="edit-save" data-id="'+it.id+'">Save changes</button></div></details>'+
    '</article>';
@@ -451,8 +453,8 @@ function hardwareCard(it){
   var low=isLow(it);
   return '<article class="card'+(low?' low':'')+'" data-id="'+it.id+'">'+
    '<div class="row between"><h3>'+esc(it.name)+'</h3>'+(low?'<span class="badge b-red">'+(it.qty<=0?'OUT':'LOW')+'</span>':'<span class="badge b-green">OK</span>')+'</div>'+
-   '<div class="row between"><b style="font-size:1.3rem">'+it.qty+' pcs</b><span class="muted">reorder floor '+it.thr+'</span></div>'+
-   (low?'<div class="muted" style="color:var(--red)">Short by '+(it.thr-it.qty+1)+' to clear the floor.</div>':'')+
+   '<div class="row between"><b style="font-size:1.3rem">'+it.qty+' pcs</b><span class="muted">reorder level '+it.thr+'</span></div>'+
+   (low?'<div class="muted" style="color:var(--red)">Need '+(it.thr-it.qty+1)+' more to get back above the reorder level.</div>':'')+
    supLine(it)+
    '<div class="row">'+
      '<button class="btn step" data-act="adj" data-d="-10" data-id="'+it.id+'" aria-label="Minus 10">−10</button>'+
@@ -461,10 +463,10 @@ function hardwareCard(it){
      '<button class="btn step" data-act="adj" data-d="1" data-id="'+it.id+'" aria-label="Plus 1">+</button>'+
      '<button class="btn step" data-act="adj" data-d="10" data-id="'+it.id+'" aria-label="Plus 10">+10</button>'+
    '</div>'+
-   '<div class="row"><button class="btn sm" data-act="count-save" data-id="'+it.id+'">Set exact count</button><button class="btn sm" data-act="restock" data-id="'+it.id+'">Restock</button><button class="btn sm" data-act="card" data-id="'+it.id+'">Bin/Spool Card</button></div>'+
+   '<div class="row"><button class="btn sm" data-act="count-save" data-id="'+it.id+'">Set exact count</button><button class="btn sm" data-act="restock" data-id="'+it.id+'">Restock</button><button class="btn sm" data-act="card" data-id="'+it.id+'">Shelf / Spool Label</button></div>'+
    '<details><summary>Edit item</summary><div class="fields two" style="margin-top:6px">'+
      '<div><label>Name</label><input data-edit="name" value="'+esc(it.name)+'"></div>'+
-     '<div><label>Low-stock threshold</label><input data-edit="thr" type="number" min="0" value="'+it.thr+'"></div>'+
+     '<div><label>Reorder level (pcs)</label><input data-edit="thr" type="number" min="0" value="'+it.thr+'"></div>'+
      '</div><div class="row" style="margin-top:8px"><button class="btn primary sm" data-act="edit-save" data-id="'+it.id+'">Save changes</button></div></details>'+
    '</article>';
 }
@@ -540,8 +542,8 @@ function updateRecipeHint(){
   var h=$('#recipe-hint'),v=$('#f-item').value,it=item(v),sup=norm($('#f-supplier').value);
   if(!it||it.type!=='filament'){h.textContent='';return}
   var n=Object.keys(it.recipes||{}).length;
-  if(sup&&n&&!it.recipes[sup])h.textContent='New supplier for this filament — save a recipe so print quality stays predictable. Existing recipes are kept.';
-  else if(sup&&it.recipes[sup])h.textContent='A recipe for this supplier already exists. Fill the fields to update it, or leave blank to keep it.';
+  if(sup&&n&&!it.recipes[sup])h.textContent='New supplier for this filament — save printer settings so print quality stays predictable. Your other saved settings are kept.';
+  else if(sup&&it.recipes[sup])h.textContent='Printer settings for this supplier are already saved. Fill the fields to update them, or leave them blank to keep them.';
   else h.textContent='';
 }
 function submitPurchase(e){
@@ -583,12 +585,12 @@ function submitPurchase(e){
   $('#f-item').value=it.id;onItemChange(false);
 }
 
-/* ---------- Piece 2: pre-job BOM check ---------- */
+/* ---------- Piece 2: before-you-promise parts check ---------- */
 var MARGIN_PCT=115; /* 15% reprint safety margin on filament */
 var PRESETS=[
-  {id:'p1',name:'Industrial Assembly Alignment Jig (PLA + M4 Hardware)',days:7,value:880,lines:[['f1',250],['h3',12],['h6',12],['h4',6],['h8',8]]},
-  {id:'p2',name:'Reverse-Engineered Automotive Sensor Mount (PETG + M3 Inserts)',days:14,value:1350,lines:[['f3',540],['h7',16],['h1',16]]},
-  {id:'p3',name:'Urgent Rapid Prototype Enclosure (PETG + Full Fastener Kit)',days:2,value:1200,lines:[['f4',350],['h2',40],['h1',20],['h5',40],['h7',16],['h3',8]]}
+  {id:'p1',name:'Industrial Alignment Jig (PLA + M4 Hardware)',days:7,value:880,lines:[['f1',250],['h3',12],['h6',12],['h4',6],['h8',8]]},
+  {id:'p2',name:'Reverse-Engineered Car Sensor Mount (PETG + M3 Inserts)',days:14,value:1350,lines:[['f3',540],['h7',16],['h1',16]]},
+  {id:'p3',name:'Urgent Prototype Electronics Case (PETG + Full Screw Kit)',days:2,value:1200,lines:[['f4',350],['h2',40],['h1',20],['h5',40],['h7',16],['h3',8]]}
 ];
 function defaultJob(){return {name:'',days:null,value:null,lines:[]}}
 function tot(it,unit,qty){return it.type==='filament'?unit*qty/1000:unit*qty}
@@ -638,8 +640,8 @@ function jobCheck(){
 function shortText(r){
   var it=r.it,u=it.type==='filament'?' g':'×';
   if(it.type==='filament'){
-    var why=r.have<r.base?'cannot even print it once — blocks whole job':(r.sev==='red'?'no safe reprint margin — high risk':'tiny gap on the reprint margin');
-    return 'Short '+r.lack+' g '+it.name+' — need '+r.need+' g incl. 15% reprint margin, have '+r.have+' g ('+why+')';
+    var why=r.have<r.base?'cannot even print it once — blocks whole job':(r.sev==='red'?'not enough spare for a reprint — high risk':'tiny gap in the spare for a reprint');
+    return 'Short '+r.lack+' g '+it.name+' — need '+r.need+' g including 15% extra for a reprint, have '+r.have+' g ('+why+')';
   }
   return 'Short '+r.lack+'× '+it.name+' — blocks whole job (need '+r.need+', have '+r.have+')';
 }
@@ -681,12 +683,12 @@ function adviceHtml(r,pn){
   var wr=rng(w,'7–12'),lr=rng(l,'1–2');
   if(!r.shorts.length){
     L.push('<p><b>No reorder needed for this job.</b></p>');
-    if(r.heads.length)L.push('<p>Restock soon (no rush, cheap West MY is fine): '+r.heads.map(function(x){return esc(x.it.name)}).join(', ')+' will be at or below the reorder floor after this job.</p>');
+    if(r.heads.length)L.push('<p>Restock soon (no rush, cheap West MY is fine): '+r.heads.map(function(x){return esc(x.it.name)}).join(', ')+' will be at or below the reorder level after this job.</p>');
     return L.join('');
   }
   var cw=pn.cw,cl=pn.cl,wMin=w?w.min:7,wMax=w?w.max:12,lMin=l?l.min:1,save=cl-cw;
   if(P==null){
-    L.push('<p><b>Add a Promised Turnaround for a firm call.</b> Cheap West MY restock arrives in '+wr+' days (≈ '+rm(cw)+'); Local Kuching backup in '+lr+' days (≈ '+rm(cl)+').</p>');
+    L.push('<p><b>Add the days promised to the customer for a clear answer.</b> Cheap West MY restock arrives in '+wr+' days (≈ '+rm(cw)+'); Local Kuching backup in '+lr+' days (≈ '+rm(cl)+').</p>');
   }else{
     var win=P-1,tail=' (keeping 1 day to print/assemble)';
     if(win>=wMax)L.push('<p><b class="pill-west">Order cheap West MY stock now.</b> It arrives in '+wr+' days, which fits your '+P+'-day promise'+tail+(save>0?' and saves about '+rm(save)+' vs local.':'.')+'</p>');
@@ -697,10 +699,10 @@ function adviceHtml(r,pn){
   function opt(p,t,tag){return p?tag+' ≈ '+rm(t)+' ('+esc(p.sup)+', ~'+Math.round(p.eta)+' d)':tag+': no history'}
   L.push('<ul>'+pn.items.map(function(x){
     var it=x.it,hint;
-    if(!x.src)hint='No supplier logged for this item yet, so the message is generic.';
+    if(!x.src)hint='No supplier saved for this item yet, so the message is generic.';
     else{
       var pr=it.type==='filament'?rm(x.src.unit)+'/kg':unitRm(x.src.unit)+'/unit';
-      hint='Internal only (not in the message): last logged '+(x.srcCh==='local'?'local':'West MY')+' source '+esc(x.src.sup)+' at '+pr+'.'+(x.srcCh!==pn.choice?' No '+(pn.choice==='local'?'local Kuching':'West MY')+' supplier logged for this item.':'');
+      hint='For your eyes only (not in the message): last bought from '+esc(x.src.sup)+' at '+pr+'.'+(x.srcCh!==pn.choice?' No '+(pn.choice==='local'?'local Kuching':'West MY')+' supplier saved for this item.':'');
     }
     return '<li><b>'+esc(it.name)+'</b>: buy '+x.buy+(it.type==='filament'?' g':' pcs')+' — '+opt(x.pw,x.tw,'West MY')+' · '+opt(x.pl,x.tl,'Local')+
       '<div class="hint">'+hint+'</div>'+
@@ -712,23 +714,23 @@ function renderJobResult(){
   var el=$('#job-result'),r=jobCheck();
   if(!r.rows.length){el.innerHTML='<div class="panel muted">Add filament grams and hardware parts (or tap a preset) to check stock before you promise a date.</div>';return}
   var pn=plan(r);
-  var V={green:['GREEN — Ready to promise','All filament (including a 15% reprint safety margin) and every part is in stock.'],
+  var V={green:['GREEN — Ready to promise','All filament (including 15% extra for a reprint) and every part is in stock.'],
          amber:['AMBER — Small gap, top up first','A minor shortage. Cover it before you promise a date.'],
          red:['RED — Do not promise a date yet','Stock is short. Cover the shortage before promising a delivery date.']}[r.level];
   var h='<div class="verdict v-'+r.level+'" role="status"><div class="lights" aria-hidden="true"><i></i><i></i><i></i></div><div><b>'+V[0]+'</b>'+V[1]+'</div></div>';
   if(r.shorts.length){
     var vt=parseFloat(state.job.value),miss=pn.miss>0?rm(pn.miss)+' in missing parts':'Missing parts';
-    h+='<div class="risk r-'+r.level+'"><b>Job Value at Risk</b><div class="big">'+miss+(vt>0?' is stalling a '+rm(vt)+' custom job.':' is stalling this custom job.')+'</div>'+
-      '<div>'+(pn.chosen>0?'Covering it costs about <b style="display:inline;font-size:inherit;text-transform:none;letter-spacing:0">'+rm(pn.chosen)+'</b> ('+(pn.choice==='local'?'local Kuching top-up':'West MY top-up')+'). ':'')+(vt>0?'':'Add a Quoted Job Value above to see what is at stake.')+'</div></div>';
+    h+='<div class="risk r-'+r.level+'"><b>Order Value Held Up</b><div class="big">'+miss+(vt>0?' is holding up a '+rm(vt)+' custom job.':' is holding up this custom job.')+'</div>'+
+      '<div>'+(pn.chosen>0?'Covering it costs about <b style="display:inline;font-size:inherit;text-transform:none;letter-spacing:0">'+rm(pn.chosen)+'</b> ('+(pn.choice==='local'?'local Kuching top-up':'West MY top-up')+'). ':'')+(vt>0?'':'Add the Job Value above to see what is at stake.')+'</div></div>';
   }
   h+='<div class="panel">';
   if(r.shorts.length)h+='<h2>Shortage list</h2><ul class="short-list">'+r.shorts.map(function(x){return '<li class="s-'+x.sev+'">'+esc(shortText(x))+'</li>'}).join('')+'</ul>';
-  if(r.heads.length)h+='<p class="muted"><b>Heads-up:</b> '+r.heads.map(function(x){return esc(x.it.name)+' → '+(Math.round(x.left*10)/10)+(x.it.type==='filament'?' g':'')+' left (floor '+x.it.thr+')'}).join('; ')+'.</p>';
-  h+='<div class="tscroll"><table><thead><tr><th>Item</th><th>Need / Have</th><th>Status</th><th>Est. cost</th></tr></thead><tbody>'+
+  if(r.heads.length)h+='<p class="muted"><b>Heads-up:</b> '+r.heads.map(function(x){return esc(x.it.name)+' → '+(Math.round(x.left*10)/10)+(x.it.type==='filament'?' g':'')+' left (reorder level '+x.it.thr+')'}).join('; ')+'.</p>';
+  h+='<div class="tscroll"><table><thead><tr><th>Item</th><th>Need / Have</th><th>Status</th><th>Estimated cost</th></tr></thead><tbody>'+
     r.rows.map(function(x){var u=x.it.type==='filament'?' g':'';
       return '<tr><td>'+esc(x.it.name)+'</td><td>'+x.need+u+' / '+x.have+u+'</td><td class="'+(x.sev?'st-'+x.sev:'st-ok')+'">'+(x.sev?'SHORT '+x.lack+u:'OK')+'</td><td>'+(x.cost==null?'no price':rm(x.cost))+'</td></tr>'}).join('')+
     '</tbody></table></div>';
-  h+='<p style="margin:10px 0 0"><b>Estimated material + hardware cost: '+rm(r.cost)+'</b><span class="muted"> at last logged supplier prices'+(r.costM>r.cost?' ('+rm(r.costM)+' if the 15% reprint margin is used)':'')+(r.unpriced?'; '+r.unpriced+' item(s) have no logged price':'')+'.</span></p></div>';
+  h+='<p style="margin:10px 0 0"><b>Estimated cost of filament + parts: '+rm(r.cost)+'</b><span class="muted"> at the last prices you paid'+(r.costM>r.cost?' ('+rm(r.costM)+' if you need the 15% extra for a reprint)':'')+(r.unpriced?'; '+r.unpriced+' item(s) have no price saved yet':'')+'.</span></p></div>';
   h+='<div class="panel advice"><h2>Smart Kuching Reorder Advice</h2>'+adviceHtml(r,pn)+'</div>';
   el.innerHTML=h;
 }
@@ -773,20 +775,20 @@ function exportBackup(){
   var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'}),url=URL.createObjectURL(blob),a=document.createElement('a');
   a.href=url;a.download='stinablis-shopguard-backup-'+today()+'.json';document.body.appendChild(a);a.click();document.body.removeChild(a);
   setTimeout(function(){URL.revokeObjectURL(url)},1500);
-  toast('Backup exported: '+state.items.length+' items, '+state.purchases.length+' purchases');
+  toast('Backup saved: '+state.items.length+' items, '+state.purchases.length+' purchases');
 }
 function importBackup(file){
   if(!file)return;
-  if(file.size>5e6){toast('Import failed: file is too large');return}
+  if(file.size>5e6){toast('Could not load: the file is too large');return}
   var rd=new FileReader();
-  rd.onerror=function(){toast('Import failed: could not read the file')};
+  rd.onerror=function(){toast('Could not load: the file could not be read')};
   rd.onload=function(){
     var data,S;
-    try{data=JSON.parse(rd.result)}catch(e){toast('Import failed: not valid JSON');return}
+    try{data=JSON.parse(rd.result)}catch(e){toast('Could not load: the file is damaged or is not a backup file');return}
     S=(data&&data.app==='stinablis-shopguard')?cleanState(data.data):null;
-    if(!S){toast('Import failed: not a Stinablis ShopGuard backup');return}
+    if(!S){toast('Could not load: this is not a Stinablis ShopGuard backup file');return}
     state=S;save();$('#logger').reset();renderAll();
-    toast('Imported '+S.items.length+' items, '+S.purchases.length+' purchases');
+    toast('Backup loaded: '+S.items.length+' items, '+S.purchases.length+' purchases');
   };
   rd.readAsText(file);
 }
@@ -844,7 +846,7 @@ function qrSvg(code){
   for(i=-2;i<=2;i++)for(j=-2;j<=2;j++)g[17+i][17+j]=Math.max(Math.abs(i),Math.abs(j))!==1?1:0;
   var d='';
   for(r=0;r<N;r++)for(c=0;c<N;c++)if(g[r][c])d+='M'+c+' '+r+'h1v1h-1z';
-  return '<svg viewBox="-2 -2 25 25" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Reference pattern for '+esc(code)+'"><rect x="-2" y="-2" width="25" height="25" fill="#fff"/><path d="'+d+'" fill="#000"/></svg>';
+  return '<svg viewBox="-2 -2 25 25" xmlns="http://www.w3.org/2000/svg" role="img" aria-label="Item ID pattern for '+esc(code)+'"><rect x="-2" y="-2" width="25" height="25" fill="#fff"/><path d="'+d+'" fill="#000"/></svg>';
 }
 function qcardHtml(it){
   var st=itemStats(it),code=codeOf(it),fil=it.type==='filament';
@@ -852,15 +854,15 @@ function qcardHtml(it){
   var h='<div class="qcard" data-card="'+esc(code)+'"><div class="qc-top">'+qrSvg(code)+
     '<div><div class="qc-brand">Stinablis ShopGuard</div><div class="qc-code">'+esc(code)+'</div><div class="qc-type">'+(fil?'FILAMENT SPOOL':'HARDWARE BIN')+'</div></div></div>'+
     '<div class="qc-name">'+esc(it.name)+'</div>';
-  h+=row('Reorder floor',it.thr+(fil?' g':' pcs'));
-  if(fil)h+=row('Empty spool tare',it.tare+' g');
-  h+=row('#1 verified supplier',st?st.sup:'none logged yet');
+  h+=row('Reorder level',it.thr+(fil?' g':' pcs'));
+  if(fil)h+=row('Empty spool weight',it.tare+' g');
+  h+=row('Main supplier',st?st.sup:'none logged yet');
   h+=row('Last price',st?fmtUnitPrice(it,st.last):'—');
-  h+=row('Typical ETA',st?'~'+Math.round(st.eta)+' day'+(Math.round(st.eta)===1?'':'s'):'—');
+  h+=row('Usual delivery time',st?'~'+Math.round(st.eta)+' day'+(Math.round(st.eta)===1?'':'s'):'—');
   if(fil){
     var rs=it.recipes||{},ks=Object.keys(rs);
     if(st&&rs[st.key])ks=[st.key];
-    h+='<div class="qc-recipe"><b>Verified slicer settings</b>'+(ks.length?ks.map(function(k){var x=rs[k];
+    h+='<div class="qc-recipe"><b>Saved printer settings</b>'+(ks.length?ks.map(function(k){var x=rs[k];
       return '<div>'+(ks.length>1?esc(x.name)+': ':'')+'Nozzle '+esc(x.nozzle)+' °C · Bed '+esc(x.bed)+' °C · Flow '+esc(x.flow)+(x.dry?'<br>'+esc(x.dry):'')+'</div>'}).join(''):'<div>None saved yet</div>')+'</div>';
   }
   return h+'</div>';
@@ -908,14 +910,14 @@ function act(btn){
     save();renderAll();
   }else if(a==='save-settings'){
     var am=parseInt($('#set-amber').value,10),rd=parseInt($('#set-red').value,10),ta2=parseInt($('#set-tare').value,10);
-    if(!(am>0)||!(rd>am)||!(ta2>=0)){toast('Red days must be more than amber days; tare 0 or more.');return}
+    if(!(am>0)||!(rd>am)||!(ta2>=0)){toast('Red days must be more than the orange days, and the empty spool weight 0 or more.');return}
     state.settings={amber:am,red:rd,tare:ta2};save();renderAll();toast('Settings saved');
   }else if(a==='card'){
-    openCards([it],'Bin/Spool Card','Print Card');
+    openCards([it],'Shelf / Spool Label','Print Label');
   }else if(a==='print-low'){
     var lows=state.items.filter(isLow);
     if(!lows.length){toast('Nothing is low on stock right now.');return}
-    openCards(lows,lows.length+' low-stock card'+(lows.length===1?'':'s'),'Print All Cards');
+    openCards(lows,lows.length+' low-stock label'+(lows.length===1?'':'s'),'Print All Labels');
   }else if(a==='print-now'){
     window.print();
   }else if(a==='close-card'){
@@ -959,9 +961,9 @@ document.addEventListener('input',function(e){
   var t=e.target;
   if(t.hasAttribute&&t.hasAttribute('data-scale')){
     var it=item(t.getAttribute('data-scale')),out=$('[data-scale-out="'+it.id+'"]'),v=parseFloat(t.value);
-    if(isNaN(v)){out.textContent='Empty spool tare: '+it.tare+' g — enter a reading to see net grams.';return}
+    if(isNaN(v)){out.textContent='Empty spool weight: '+it.tare+' g — type a reading to see how much filament is left.';return}
     var net=v-it.tare;
-    out.textContent=net<0?'Below tare ('+it.tare+' g) — check the reading.':v+' g − '+it.tare+' g tare = '+(Math.round(net*10)/10)+' g net filament';
+    out.textContent=net<0?'Below the empty spool weight ('+it.tare+' g) — check the reading.':v+' g − '+it.tare+' g empty spool = '+(Math.round(net*10)/10)+' g of filament left';
   }
   if(t.hasAttribute&&t.hasAttribute('data-jqty')){var ln=state.job.lines[parseInt(t.getAttribute('data-jqty'),10)];if(ln){ln.qty=t.value;save();renderJobResult()}}
   if(t.id==='job-days'){state.job.days=t.value===''?null:Math.max(0,parseInt(t.value,10)||0);save();renderJobResult()}
