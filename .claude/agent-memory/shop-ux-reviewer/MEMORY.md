@@ -16,3 +16,8 @@
 ## Patterns to watch
 - Every new button, tooltip, placeholder, option and error message must pass the plain-English rules, including text inside collapsed sections.
 - At 390px, check long item names, the four tabs in the header, and rows that hold a select plus a number box.
+
+## Improve-loop pass (shop-floor edge cases)
+- Fixed and verified CLEAN: Reset Demo Data double-tap (1s ignore, clearer armed text, backup tip), Undo double-tap (1s ignore, "Undo: <job>" label, same-job deduct guard), scale reading below Empty Spool Weight now saves 0 g.
+- Checked fine: Quick Restock Log and Custom Job blank/0/negative inputs, WhatsApp copy has no prices/ratings/notes, backup keys unchanged.
+- Minor open: toast "net 800 g saved" (index.html ~1165) could read "Saved: 800 g of filament left".
