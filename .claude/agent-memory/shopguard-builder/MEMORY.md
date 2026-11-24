@@ -21,4 +21,6 @@
 ## Resolved bugs
 - `fmtUnitPrice` showed 3 decimals under RM 1 (now `unitRm`).
 - An item id of `__proto__` in a backup is rejected on import.
+- Reset Demo Data ignores a second tap within 1 s (`resetAt`); Undo ignores taps within 1 s of the last one (`lastUndoAt`); `deductParts` returns early if the top undo entry has the same `jobSig()`. Tests that tap reset/undo twice must `waitForTimeout(1100)` between taps.
+- Scale reading lighter than Empty Spool Weight now saves 0 g (negative readings are still refused).
 - Risk banner said "Missing parts is holding up" (now "The missing parts are holding up").

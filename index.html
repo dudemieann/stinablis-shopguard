@@ -352,6 +352,7 @@ fieldset.radios legend{font-size:.8rem;font-weight:600;padding:0;margin-bottom:4
     <input type="file" id="import-file" accept=".json,application/json" class="hidden" aria-label="Choose a backup file">
     <button class="btn danger sm" data-act="reset" id="reset-btn">Reset Demo Data</button>
   </div>
+  <div class="muted" style="width:100%;font-size:.78rem">Tip: tap Save Backup File first if you want to keep your own data.</div>
   <div class="muted" style="width:100%;font-size:.78rem">A backup file holds your inventory, supplier history, saved printer settings and the current job. Loading a file replaces the data on this device.</div>
 </footer>
 <div id="toast" role="status" aria-live="polite"></div>
@@ -1121,7 +1122,8 @@ function deductHtml(r){
   return '<div class="deduct"><button type="button" class="btn primary" data-act="deduct"'+((!can||done)?' disabled':'')+'>Deduct Parts From Stock</button> <span class="muted">'+esc(note)+'</span></div>';
 }
 function deductParts(){
-  var r=jobCheck();
+  var r=jobCheck(),topU=undoStack[undoStack.length-1];
+  if(topU&&topU.sig===jobSig())return;
   if(!canDeduct(r)){toast('Restock missing parts before deducting.');return}
   var entries=r.rows.map(function(x){
     var it=x.it,before=it.qty,after=Math.round((before-x.base)*100)/100;
@@ -1131,8 +1133,11 @@ function deductParts(){
   undoStack=undoStack.slice(-10);saveUndo();save();renderAll();
   toast('Parts deducted — '+entries.length+' item'+(entries.length===1?'':'s')+' taken off the shelf');
 }
+var lastUndoAt=0;
 function undoDeduct(){
+  if(Date.now()-lastUndoAt<1000)return;
   var u=undoStack.pop();if(!u)return;
+  lastUndoAt=Date.now();
   u.entries.forEach(function(e){
     var it=item(e.id);if(!it)return;
     it.qty=(it.qty===e.after)?e.before:Math.round((it.qty+e.amount)*100)/100;
@@ -1144,18 +1149,19 @@ function renderDeductStrip(){
   if(!u){el.innerHTML='';return}
   el.innerHTML='<div class="strip" role="status"><div><b>Parts deducted'+(u.job?' for '+esc(u.job):'')+'.</b> '+u.entries.length+' item'+(u.entries.length===1?'':'s')+' taken off the shelf'+(undoStack.length>1?' ('+undoStack.length+' deductions can be undone)':'')+'.'+
     '<details><summary>See what changed</summary><ul style="margin:4px 0 0;padding-left:18px">'+u.entries.map(function(e){return '<li>'+esc(e.name)+': '+e.before+(e.filament?' g':'')+' → '+e.after+(e.filament?' g':'')+'</li>'}).join('')+'</ul></details></div>'+
-    '<button type="button" class="btn" data-act="undo-deduct">Undo</button></div>';
+    '<button type="button" class="btn" data-act="undo-deduct">Undo'+(u.job?': '+esc(u.job):'')+'</button></div>';
 }
 
 /* ---------- actions ---------- */
-var resetArm=false,resetT;
+var resetArm=false,resetT,resetAt=0;
 function act(btn){
   var a=btn.getAttribute('data-act'),id=btn.getAttribute('data-id'),it=id&&item(id),card=btn.closest('.card');
   if(a==='scale-save'){
     var inp=$('[data-scale="'+id+'"]'),val=parseFloat(inp.value);
     if(isNaN(val)){toast('Enter the scale reading first.');return}
     var net=val-it.tare;
-    if(net<0){toast('Reading is below the empty spool weight ('+it.tare+' g).');return}
+    if(val<0){toast('Enter the scale reading first.');return}
+    if(net<0){it.qty=0;save();renderAll();toast('Spool is empty (0 g left). Reading was lighter than the empty spool.');return}
     it.qty=Math.round(net*10)/10;save();renderAll();toast(it.name+': net '+it.qty+' g saved');
   }else if(a==='adj'){
     it.qty=Math.max(0,it.qty+parseInt(btn.getAttribute('data-d'),10));save();renderAll();
@@ -1247,8 +1253,9 @@ function act(btn){
       else{li.querySelector('details').open=true;toast('Copy blocked — select the message below and copy it')}
     });
   }else if(a==='reset'){
-    if(!resetArm){resetArm=true;btn.textContent='Tap again to confirm reset';clearTimeout(resetT);resetT=setTimeout(function(){resetArm=false;btn.textContent='Reset Demo Data'},4000);return}
-    resetArm=false;btn.textContent='Reset Demo Data';
+    if(!resetArm){resetArm=true;resetAt=Date.now();btn.textContent='Tap again to erase your data and restore demo items';clearTimeout(resetT);resetT=setTimeout(function(){resetArm=false;btn.textContent='Reset Demo Data'},4000);return}
+    if(Date.now()-resetAt<1000)return;
+    clearTimeout(resetT);resetArm=false;btn.textContent='Reset Demo Data';
     state=seed();clearUndo();jobMode='preset';cjReset();resetFilters();save();$('#logger').reset();closeAddFil();renderAll();toast('Demo data restored');
   }
 }
@@ -1263,7 +1270,7 @@ document.addEventListener('input',function(e){
     var it=item(t.getAttribute('data-scale')),out=$('[data-scale-out="'+it.id+'"]'),v=parseFloat(t.value);
     if(isNaN(v)){out.textContent='Empty spool weight: '+it.tare+' g — type a reading to see how much filament is left.';return}
     var net=v-it.tare;
-    out.textContent=net<0?'Below the empty spool weight ('+it.tare+' g) — check the reading.':v+' g − '+it.tare+' g empty spool = '+(Math.round(net*10)/10)+' g of filament left';
+    out.textContent=net<0?'0 g left — spool is empty or the reading is off':v+' g − '+it.tare+' g empty spool = '+(Math.round(net*10)/10)+' g of filament left';
   }
   if(t.hasAttribute&&t.hasAttribute('data-jqty')){var ln=state.job.lines[parseInt(t.getAttribute('data-jqty'),10)];if(ln){ln.qty=t.value;save();renderJobResult()}}
   if(t.id==='job-days'){state.job.days=t.value===''?null:Math.max(0,parseInt(t.value,10)||0);save();renderJobResult()}

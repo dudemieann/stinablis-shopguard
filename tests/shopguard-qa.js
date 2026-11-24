@@ -51,7 +51,9 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     ok((await p.locator('#filament-grid .card',{hasText:'PLA White'}).locator('b').first().innerText()).includes('450 g left'),'scale save sets 450 g left');
     await p.locator('#filament-grid .card',{hasText:'PLA White'}).locator('[data-scale]').fill('100');
     await p.locator('#filament-grid .card',{hasText:'PLA White'}).locator('[data-act=scale-save]').click();
-    ok((await p.locator('#toast').innerText()).includes('below'),'below-tare rejected');
+    ok((await p.locator('#toast').innerText()).includes('Spool is empty (0 g left)')&&(await p.locator('#filament-grid .card',{hasText:'PLA White'}).locator('b').first().innerText()).includes('0 g left'),'reading below empty spool weight saves 0 g with a plain toast');
+    await p.locator('#filament-grid .card',{hasText:'PLA White'}).locator('[data-scale]').fill('100');
+    ok((await p.locator('#filament-grid .card',{hasText:'PLA White'}).locator('[data-scale-out]').innerText()).includes('0 g left — spool is empty or the reading is off'),'light-reading hint text');
     // hardware
     await p.click('#tab-hardware');
     ok(await p.locator('#hardware-groups .card').count()===20,'20 hardware cards');
@@ -106,8 +108,10 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     await p.reload(); 
     ok(await p.locator('#f-item option',{hasText:'PLA+ Red'}).count()===1,'persisted after reload');
     // reset
-    await p.click('#reset-btn'); ok((await p.innerText('#reset-btn')).includes('confirm'),'reset needs confirm');
+    await p.click('#reset-btn'); ok((await p.innerText('#reset-btn')).includes('Tap again to erase your data and restore demo items'),'reset needs confirm');
     await p.click('#reset-btn');
+    ok(await p.locator('#f-item option',{hasText:'PLA+ Red'}).count()===1,'reset ignores a second tap within 1 second');
+    await p.waitForTimeout(1100); await p.click('#reset-btn');
     ok(await p.locator('#f-item option',{hasText:'PLA+ Red'}).count()===0,'reset restores demo');
     ok(await p.locator('#filament-grid .card').count()===6,'6 filament after reset');
     // ===== Piece 2 =====
@@ -233,7 +237,7 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     ok(await p.$eval('main',e=>getComputedStyle(e).display)!=='none','print without modal: app still printable');
     await p.emulateMedia({media:'screen'});
     // Piece1 + reset still fine: reset clears job
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     await p.click('#tab-job'); ok(await p.locator('.jobline').count()===0,'reset clears job');
     // new item appears in job add list
     await p.click('#tab-purchases'); await p.selectOption('#f-item','__new__');
@@ -243,7 +247,7 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     await p.click('#tab-hardware'); await p.locator('#hardware-groups .card',{hasText:'M5 bolt test'}).locator('[data-act=card]').click();
     ok((await p.innerText('#card-sheet')).includes('M5 bolt test'),'card works for user-added item');
     await p.click('#cm-close');
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     // ===== Plain-English labels =====
     console.log('  -- plain-English labels');
     const BAN=/\bBOM\b|\btare\b|slicer|bin\/spool|print card|\bjson\b|\.json|\bETA\b|\bfloor\b|\bverified\b|recipe|stalling|value at risk|\bnet g\b|threshold|job check|pre-job/i;
@@ -320,7 +324,7 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     ok(Object.keys(bk.data.items.find(i=>i.name.startsWith('PLA White')).recipes).length>=3,'export includes verified slicer recipes');
     ok(bk.data.bad['roundtrip supply <b>x</b>']===true,'export includes supplier flags');
     // wipe then import
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     ok(await p.locator('#f-item option',{hasText:'PLA White'}).count()===1,'reset done');
     const afterReset=JSON.parse(await p.evaluate(()=>localStorage.getItem('stinablis_shopguard_v1')));
     ok(afterReset.purchases.length!==before.purchases.length,'state differs after reset');
@@ -352,7 +356,7 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     ok(hs.items.length===before.items.length+1&&hs.purchases.length===before.purchases.length&&!hs.items.some(i=>i.id==='__proto__'||i.id==='x1'),'bad entries dropped (weird type, __proto__ id, orphan/negative purchases), valid kept');
     await p.click('#tab-hardware'); ok(await p.locator('#hardware-groups img').count()===0&&(await p.innerText('#hardware-groups')).includes('<img src=x'),'no injected HTML from backup (shown as text)');
     await noOv('footer/import state');
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     // ===== Piece 4 =====
     console.log('  -- piece 4');
     await p.click('#tab-hardware');
@@ -458,7 +462,7 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     const bk4=JSON.parse(fs.readFileSync(f4,'utf8'));
     ok(bk4.data.items.filter(i=>i.type==='hardware').every(i=>typeof i.fitNote==='string')&&bk4.data.items.find(i=>i.name==='Brass Standoff M3').fitNote==='M3 x 10 mm, female-female','backup file includes fit notes');
     const pre4=JSON.parse(await p.evaluate(()=>localStorage.getItem('stinablis_shopguard_v1')));
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     await p.setInputFiles('#import-file',f4);
     await p.waitForFunction(()=>document.querySelector('#toast').textContent.startsWith('Backup loaded'));
     let same4=true; try{assert.deepStrictEqual(JSON.parse(await p.evaluate(()=>localStorage.getItem('stinablis_shopguard_v1'))),pre4)}catch(e){same4=false;console.log('  DIFF '+e.message.slice(0,400))}
@@ -476,12 +480,12 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     await p.waitForFunction(()=>document.querySelector('#toast').textContent.includes('copied'));
     ok(!(await p.evaluate(()=>navigator.clipboard.readText())).includes('Exact size'),'restock message has no empty size line');
     // jargon sweep over the new screens
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     await p.click('#tab-hardware'); await p.click('#add-hw-toggle'); await scan('Hardware tab with add form'); await p.click('#add-hw-toggle');
     await p.click('#tab-purchases'); await p.selectOption('#f-item',{label:'Stick-On Rubber Feet'}); await scan('Quick Restock Log with pack buttons');
     await p.click('#tab-job'); await p.click('[data-p=p4]'); await p.locator('.advice details summary').first().click(); await scan('Parts Check with Event Merch Batch');
     await p.click('#tab-hardware'); await p.locator('#hardware-groups .card',{hasText:'Mechanical Clicker'}).locator('[data-act=card]').click(); await scan('label with exact size'); await p.click('#cm-close');
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     // ===== Piece 5 =====
     console.log('  -- piece 5');
     const iso5=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
@@ -680,7 +684,7 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     ok(await p.isEnabled('[data-act=deduct]'),'exactly 12 of 12: Deduct enabled');
     await p.click('[data-act=deduct]'); s5=await stock5(); ok(s5['Brass Standoff M3']===0,'stock goes to exactly 0, never below');
     await p.click('#tab-hardware'); await p.locator('#hardware-groups .card',{hasText:'Brass Standoff M3'}).locator('[data-act=adj][data-d="10"]').click();
-    await p.click('#tab-job'); await p.click('[data-act=undo-deduct]'); s5=await stock5();
+    await p.waitForTimeout(1100); await p.click('#tab-job'); await p.click('[data-act=undo-deduct]'); s5=await stock5();
     ok(s5['Brass Standoff M3']===22,'Undo puts the taken parts back even after later edits (10 + 12 = 22)');
     await p.click('#tab-hardware'); await p.locator('#hardware-groups .card',{hasText:'Brass Standoff M3'}).locator('[data-act=count-save]').click();
     // presets: AMBER covered by stock can be deducted; RED cannot
@@ -691,7 +695,7 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     ok((await p.innerText('#job-result .verdict')).includes('AMBER')&&await p.isEnabled('[data-act=deduct]')&&(await p.innerText('.deduct')).includes('not the full 15% extra'),'AMBER preset (stock covers the job itself): Deduct enabled with a note');
     await p.click('[data-act=deduct]'); s5=await stock5();
     ok(s5['PETG Grey 1.75mm']===before5['PETG Grey 1.75mm']-540&&s5['M3 brass heat-set insert (4mm long)']===before5['M3 brass heat-set insert (4mm long)']-16,'preset deduct takes 540 g PETG Grey and 16 inserts');
-    await p.click('[data-act=undo-deduct]'); assert.deepStrictEqual(await stock5(),before5); ok(true,'Undo restores every item exactly');
+    await p.waitForTimeout(1100); await p.click('[data-act=undo-deduct]'); assert.deepStrictEqual(await stock5(),before5); ok(true,'Undo restores every item exactly');
     // ---- backup keeps the new fields; older files still load
     await p.click('[data-p=p1]');
     const [dl5]=await Promise.all([p.waitForEvent('download'),p.click('#export-btn')]);
@@ -700,7 +704,7 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     ok(bk5.data.items.filter(i=>i.type==='filament').every(i=>'dried' in i)&&bk5.data.items.find(i=>i.name==='PETG Grey 1.75mm').dried===dago(0)&&bk5.data.items.some(i=>i.name==='HIPS Natural - Local'),'backup has dried dates and the new spools');
     ok(!/undo/i.test(JSON.stringify(bk5)),'undo history is not part of the backup');
     const pre5=JSON.parse(await p.evaluate(()=>localStorage.getItem('stinablis_shopguard_v1')));
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     ok(await p.locator('#filament-grid .card').count()===6,'reset: back to 6 spools');
     await p.setInputFiles('#import-file',f5); await p.waitForFunction(()=>document.querySelector('#toast').textContent.startsWith('Backup loaded'));
     let same5=true; try{assert.deepStrictEqual(JSON.parse(await p.evaluate(()=>localStorage.getItem('stinablis_shopguard_v1'))),pre5)}catch(e){same5=false;console.log('  DIFF '+e.message.slice(0,500))}
@@ -713,14 +717,14 @@ const ok=(c,m)=>{console.log((c?'PASS ':'FAIL ')+m); if(c)passes++; else {fails+
     ok(await p.locator('.hum.red').count()===1&&(await pg5().locator('.hum').innerText()).includes('Opened 38 days ago'),'old backup: humidity counts from the opened date again');
     ok(await p.locator('#deduct-strip .strip').count()===0,'no stale undo strip after loading a file');
     // ---- jargon sweep with every new form and mode open
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     await p.click('#tab-filament'); await p.click('#add-fil-toggle'); await p.selectOption('#af-material','__other__'); await p.check('#af-opened'); await scan('Filament tab with add-spool form'); await noOv('add spool form (Other + Opened)'); await p.click('#add-fil-toggle');
     await p.fill('#fil-search','zzzz'); await scan('Filament tab, no matches'); await p.click('#filament-grid [data-act=clear-filters]');
     await p.click('#tab-hardware'); await p.fill('#hw-search','zzzz'); await scan('Hardware tab, no matches'); await p.click('#hardware-groups [data-act=clear-filters]');
     await p.click('#tab-job'); await p.click('#job-custom-btn'); await pick('#cj-spool','PETG Black'); await p.fill('#cj-grams','200'); await pick('[data-cj-item="0"]','M3x8'); await p.fill('[data-cj-qty="0"]','10'); await p.click('[data-act=cj-add-row]');
     await p.click('[data-act=deduct]'); await scan('Parts Check: custom job + deduct strip'); await noOv('custom job + deduct strip');
-    await p.click('[data-act=undo-deduct]');
-    await p.click('#reset-btn'); await p.click('#reset-btn');
+    await p.waitForTimeout(1100); await p.click('[data-act=undo-deduct]');
+    await p.click('#reset-btn'); await p.waitForTimeout(1100); await p.click('#reset-btn');
     await p.click('#tab-filament'); await p.screenshot({path:SH+name+'-filament.png',fullPage:true});
     await p.click('#tab-hardware'); await p.screenshot({path:SH+name+'-hardware.png',fullPage:true});
     ok(errs.length===0,'zero console/page errors '+JSON.stringify(errs));
